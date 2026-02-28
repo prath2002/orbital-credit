@@ -1,0 +1,346 @@
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from uuid import UUID
+
+from fastapi import Depends, FastAPI, Header
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.db import get_db
+from app.models import AuditEvent, FarmerReference, LoanApplication, RiskAssessment
+from app.schemas import (
+    AnalyzeFarmRequest,
+    AnalyzeFarmResponse,
+    ApplicationStatus,
+    BankerApplicationItem,
+    BankerApplicationsResponse,
+    DecisionRequest,
+    DecisionResponse,
+    LayerScore,
+    RiskScoreMetadata,
+    RiskScoreResponse,
+)
+
+
+app = FastAPI(title="Orbital Credit API Gateway", version="0.1.0")
+
+
+def _layer_status(score: int | None) -> str:
+    return "available" if score is not None else "pending"
+
+
+def _compute_overall_score(
+    satellite_score: int,
+    debt_score: int,
+    social_score: int,
+) -> int:
+    return round((0.40 * satellite_score) + (0.35 * debt_score) + (0.25 * social_score))
+
+
+def _evaluate_zone(payload: DecisionRequest) -> tuple[str, list[str]]:
+    reasons: list[str] = []
+
+    # Hard RED rules (highest precedence).
+    if payload.satellite_no_crop_history:
+        reasons.append("No crop history detected from satellite analysis")
+        return "RED", reasons
+    if payload.satellite_fire_detected:
+        reasons.append("Fire signal detected in satellite analysis")
+        return "RED", reasons
+    if payload.debt_to_income_ratio > 0.50:
+        reasons.append("Debt-to-income ratio exceeds 0.50")
+        return "RED", reasons
+    if payload.social_verified_references < 2:
+        reasons.append("Fewer than 2 verified references")
+        return "RED", reasons
+    if payload.identity_verification_failed:
+        reasons.append("Identity verification failed")
+        return "RED", reasons
+
+    # GREEN eligibility gates.
+    satellite_green = (
+        payload.satellite_score >= 80
+        and payload.satellite_data_quality >= 0.80
+        and not payload.satellite_fire_detected
+    )
+    debt_green = (
+        payload.debt_to_income_ratio <= 0.30
+        and payload.debt_status == "verified"
+    )
+    social_green = (
+        payload.social_score >= 70
+        and payload.social_verified_references == 2
+    )
+    if satellite_green and debt_green and social_green:
+        reasons.append("All green eligibility gates satisfied")
+        return "GREEN", reasons
+
+    # Default YELLOW with primary reasons.
+    if payload.satellite_data_quality < 0.80:
+        reasons.append("Satellite data quality below 0.80")
+    if payload.debt_status in {"timeout", "provider_unavailable", "consent_pending"}:
+        reasons.append("Debt status is not fully verified")
+    borderline = (
+        (60 <= payload.satellite_score <= 79)
+        or (0.31 <= payload.debt_to_income_ratio <= 0.50)
+        or (40 <= payload.social_score <= 69)
+    )
+    if borderline:
+        reasons.append("One or more inputs are in borderline range")
+    if not reasons:
+        reasons.append("Manual review required by safe default rule")
+    return "YELLOW", reasons
+
+
+@app.get("/health")
+def healthcheck() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+@app.post("/api/v1/analyze-farm", response_model=AnalyzeFarmResponse, status_code=202)
+def analyze_farm(
+    payload: AnalyzeFarmRequest,
+    db: Session = Depends(get_db),
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+) -> AnalyzeFarmResponse:
+    if idempotency_key:
+        existing = db.execute(
+            select(LoanApplication).where(LoanApplication.idempotency_key == idempotency_key)
+        ).scalar_one_or_none()
+        if existing:
+            return AnalyzeFarmResponse(
+                application_id=existing.application_id,
+                status=ApplicationStatus(existing.status),
+                message="Application already accepted for processing",
+            )
+
+    application = LoanApplication(
+        banker_id=payload.banker_id,
+        farmer_mobile=payload.farmer_mobile,
+        loan_amount=payload.loan_amount,
+        latitude=payload.gps_coordinates.latitude,
+        longitude=payload.gps_coordinates.longitude,
+        status=ApplicationStatus.processing.value,
+        idempotency_key=idempotency_key,
+    )
+    db.add(application)
+    db.flush()
+
+    reference_rows = [
+        FarmerReference(
+            application_id=application.application_id,
+            farmer_mobile=payload.farmer_mobile,
+            reference_mobile=reference,
+        )
+        for reference in payload.references
+    ]
+    db.add_all(reference_rows)
+
+    db.add(
+        RiskAssessment(
+            application_id=application.application_id,
+            rationale="Risk assessment queued for satellite, debt, and social analysis",
+        )
+    )
+
+    db.add(
+        AuditEvent(
+            application_id=application.application_id,
+            actor_type="banker",
+            actor_id=payload.banker_id,
+            event_type="application_created",
+            payload_json={
+                "loan_amount": payload.loan_amount,
+                "farmer_mobile": payload.farmer_mobile,
+                "reference_count": len(payload.references),
+            },
+        )
+    )
+    db.commit()
+
+    return AnalyzeFarmResponse(
+        application_id=application.application_id,
+        status=ApplicationStatus.processing,
+        message="Application accepted for processing",
+    )
+
+
+@app.get("/api/v1/risk-score/{application_id}", response_model=RiskScoreResponse)
+def get_risk_score(application_id: UUID, db: Session = Depends(get_db)) -> RiskScoreResponse:
+    application = db.get(LoanApplication, application_id)
+    if application is None:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="application not found")
+
+    assessment = db.execute(
+        select(RiskAssessment)
+        .where(RiskAssessment.application_id == application_id)
+        .order_by(RiskAssessment.created_at.desc())
+        .limit(1)
+    ).scalar_one_or_none()
+
+    end_time = assessment.created_at if assessment else datetime.now(timezone.utc)
+    processing_seconds = max(0, int((end_time - application.created_at).total_seconds()))
+
+    if assessment is None:
+        return RiskScoreResponse(
+            application_id=application.application_id,
+            satellite=LayerScore(score=None, status="pending"),
+            debt=LayerScore(score=None, status="pending"),
+            social=LayerScore(score=None, status="pending"),
+            overall_score=None,
+            traffic_light_status=None,
+            rationale="Risk assessment is still processing",
+            metadata=RiskScoreMetadata(
+                created_at=application.created_at,
+                processing_time_seconds=processing_seconds,
+                data_quality_flags=["assessment_pending"],
+            ),
+        )
+
+    return RiskScoreResponse(
+        application_id=application.application_id,
+        satellite=LayerScore(
+            score=assessment.satellite_score,
+            status=_layer_status(assessment.satellite_score),
+        ),
+        debt=LayerScore(
+            score=assessment.debt_score,
+            status=_layer_status(assessment.debt_score),
+        ),
+        social=LayerScore(
+            score=assessment.social_score,
+            status=_layer_status(assessment.social_score),
+        ),
+        overall_score=assessment.overall_score,
+        traffic_light_status=assessment.traffic_light_status,
+        rationale=assessment.rationale,
+        metadata=RiskScoreMetadata(
+            created_at=assessment.created_at,
+            processing_time_seconds=processing_seconds,
+            data_quality_flags=(
+                []
+                if (
+                    assessment.satellite_score is not None
+                    and assessment.debt_score is not None
+                    and assessment.social_score is not None
+                )
+                else ["assessment_incomplete"]
+            ),
+        ),
+    )
+
+
+@app.get("/api/v1/applications/{banker_id}", response_model=BankerApplicationsResponse)
+def get_banker_applications(
+    banker_id: str,
+    db: Session = Depends(get_db),
+) -> BankerApplicationsResponse:
+    applications = db.execute(
+        select(LoanApplication)
+        .where(LoanApplication.banker_id == banker_id)
+        .order_by(LoanApplication.created_at.desc())
+    ).scalars().all()
+
+    response_items: list[BankerApplicationItem] = []
+    for application in applications:
+        latest_assessment = db.execute(
+            select(RiskAssessment)
+            .where(RiskAssessment.application_id == application.application_id)
+            .order_by(RiskAssessment.created_at.desc())
+            .limit(1)
+        ).scalar_one_or_none()
+
+        response_items.append(
+            BankerApplicationItem(
+                application_id=application.application_id,
+                farmer_mobile=application.farmer_mobile,
+                loan_amount=application.loan_amount,
+                status=application.status,
+                created_at=application.created_at,
+                overall_score=(
+                    latest_assessment.overall_score if latest_assessment else None
+                ),
+                traffic_light_status=(
+                    latest_assessment.traffic_light_status
+                    if latest_assessment
+                    else None
+                ),
+            )
+        )
+
+    return BankerApplicationsResponse(
+        banker_id=banker_id,
+        applications=response_items,
+    )
+
+
+@app.post("/api/v1/decisions/{application_id}", response_model=DecisionResponse)
+def post_decision(
+    application_id: UUID,
+    payload: DecisionRequest,
+    db: Session = Depends(get_db),
+) -> DecisionResponse:
+    application = db.get(LoanApplication, application_id)
+    if application is None:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=404, detail="application not found")
+
+    overall_score = _compute_overall_score(
+        satellite_score=payload.satellite_score,
+        debt_score=payload.debt_score,
+        social_score=payload.social_score,
+    )
+    zone, reasons = _evaluate_zone(payload)
+    rationale = payload.rationale_override or "; ".join(reasons[:3])
+
+    assessment = db.execute(
+        select(RiskAssessment)
+        .where(RiskAssessment.application_id == application_id)
+        .order_by(RiskAssessment.created_at.desc())
+        .limit(1)
+    ).scalar_one_or_none()
+
+    if assessment is None:
+        assessment = RiskAssessment(application_id=application_id)
+        db.add(assessment)
+        db.flush()
+
+    assessment.satellite_score = payload.satellite_score
+    assessment.debt_score = payload.debt_score
+    assessment.social_score = payload.social_score
+    assessment.overall_score = overall_score
+    assessment.traffic_light_status = zone
+    assessment.rationale = rationale
+
+    application.status = ApplicationStatus.completed.value
+
+    db.add(
+        AuditEvent(
+            application_id=application_id,
+            actor_type="service",
+            actor_id=payload.actor_id,
+            event_type="decision_finalized",
+            payload_json={
+                "overall_score": overall_score,
+                "traffic_light_status": zone,
+                "debt_to_income_ratio": payload.debt_to_income_ratio,
+                "debt_status": payload.debt_status.value,
+                "reasons": reasons[:3],
+            },
+        )
+    )
+    db.commit()
+    db.refresh(assessment)
+
+    return DecisionResponse(
+        application_id=application_id,
+        assessment_id=assessment.assessment_id,
+        overall_score=overall_score,
+        traffic_light_status=zone,
+        status=ApplicationStatus.completed,
+        rationale=rationale,
+    )
