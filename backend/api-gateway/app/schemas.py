@@ -125,3 +125,14 @@ class DecisionResponse(BaseModel):
     traffic_light_status: str
     status: ApplicationStatus
     rationale: str
+
+
+class ErrorDetail(BaseModel):
+    code: str
+    message: str
+    correlation_id: str | None = None
+    retryable: bool
+
+
+class ErrorResponse(BaseModel):
+    error: ErrorDetail
