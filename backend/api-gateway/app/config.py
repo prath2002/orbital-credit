@@ -14,6 +14,16 @@ class Settings(BaseSettings):
     satellite_search_lookback_days: int = 60
     satellite_max_cloud_cover: float = 40.0
     satellite_request_timeout_seconds: float = 30.0
+    satellite_feature_history_years: int = 3
+    satellite_feature_max_scenes: int = 18
+    satellite_peak_min_ndvi: float = 0.35
+    satellite_peak_min_gap_days: int = 45
+    satellite_fire_nbr_threshold: float = 0.10
+    satellite_fire_ndvi_drop_threshold: float = 0.20
+    satellite_retry_attempts: int = 3
+    satellite_retry_base_delay_seconds: float = 0.5
+    satellite_circuit_breaker_failure_threshold: int = 5
+    satellite_circuit_breaker_reset_seconds: int = 60
 
 
 settings = Settings()

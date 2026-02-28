@@ -84,6 +84,14 @@ class RiskAssessment(Base):
         UUID(as_uuid=True), ForeignKey("loan_applications.application_id"), nullable=False
     )
     satellite_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    satellite_quality: Mapped[float | None] = mapped_column(Float, nullable=True)
+    satellite_flags: Mapped[list[str] | None] = mapped_column(
+        JSONB, nullable=True, server_default=text("'[]'::jsonb")
+    )
+    satellite_provider_status: Mapped[str] = mapped_column(
+        String(30), nullable=False, server_default=text("'pending'"), default="pending"
+    )
+    satellite_computed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     debt_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     social_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     overall_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
