@@ -16,8 +16,10 @@ from app.core.logging import configure_logging, log_event
 from app.core.request_context import set_application_id
 from app.db import get_db
 from app.models import FarmerReference, LoanApplication, RiskAssessment
+from app.services.assessment_orchestrator import AssessmentOrchestrator
 from app.services.satellite.connectivity_check import SatelliteConnectivityChecker
-from app.services.satellite.models import ConnectivityCheckResult
+from app.services.satellite.feature_extractor import SatelliteFeatureExtractor
+from app.services.satellite.models import ConnectivityCheckResult, SatelliteFeatureResult
 from app.schemas import (
     AnalyzeFarmRequest,
     AnalyzeFarmResponse,
@@ -150,6 +152,16 @@ def _layer_status(score: int | None) -> str:
     return "available" if score is not None else "pending"
 
 
+def _satellite_layer_status(assessment: RiskAssessment | None) -> str:
+    if assessment is None:
+        return "pending"
+    if assessment.satellite_provider_status == "failed":
+        return "unavailable"
+    if assessment.satellite_score is not None:
+        return "available"
+    return "pending"
+
+
 def _compute_overall_score(
     satellite_score: int,
     debt_score: int,
@@ -228,6 +240,15 @@ def satellite_connectivity_check(
     return checker.run(latitude=latitude, longitude=longitude)
 
 
+@app.get("/api/v1/satellite/features", response_model=SatelliteFeatureResult)
+def satellite_features(
+    latitude: float = Query(ge=-90, le=90),
+    longitude: float = Query(ge=-180, le=180),
+) -> SatelliteFeatureResult:
+    extractor = SatelliteFeatureExtractor()
+    return extractor.extract(latitude=latitude, longitude=longitude)
+
+
 @app.post("/api/v1/analyze-farm", response_model=AnalyzeFarmResponse, status_code=202)
 def analyze_farm(
     payload: AnalyzeFarmRequest,
@@ -291,11 +312,19 @@ def analyze_farm(
     ]
     db.add_all(reference_rows)
 
-    db.add(
-        RiskAssessment(
-            application_id=application.application_id,
-            rationale="Risk assessment queued for satellite, debt, and social analysis",
-        )
+    assessment = RiskAssessment(
+        application_id=application.application_id,
+        rationale="Risk assessment queued for satellite, debt, and social analysis",
+        satellite_provider_status="pending",
+    )
+    db.add(assessment)
+    db.flush()
+
+    orchestrator = AssessmentOrchestrator()
+    orchestrator.run_satellite_assessment(
+        db=db,
+        application=application,
+        assessment=assessment,
     )
 
     emit_audit_event(
@@ -360,7 +389,7 @@ def get_risk_score(
     if assessment is None:
         return RiskScoreResponse(
             application_id=application.application_id,
-            satellite=LayerScore(score=None, status="pending"),
+            satellite=LayerScore(score=None, status="pending", quality=None, provider_status="pending", flags=[]),
             debt=LayerScore(score=None, status="pending"),
             social=LayerScore(score=None, status="pending"),
             overall_score=None,
@@ -377,7 +406,10 @@ def get_risk_score(
         application_id=application.application_id,
         satellite=LayerScore(
             score=assessment.satellite_score,
-            status=_layer_status(assessment.satellite_score),
+            status=_satellite_layer_status(assessment),
+            quality=assessment.satellite_quality,
+            provider_status=assessment.satellite_provider_status,
+            flags=assessment.satellite_flags or [],
         ),
         debt=LayerScore(
             score=assessment.debt_score,
@@ -400,7 +432,7 @@ def get_risk_score(
                     and assessment.debt_score is not None
                     and assessment.social_score is not None
                 )
-                else ["assessment_incomplete"]
+                else (assessment.satellite_flags or []) + ["assessment_incomplete"]
             ),
         ),
     )

@@ -61,6 +61,9 @@ class AnalyzeFarmResponse(BaseModel):
 class LayerScore(BaseModel):
     score: int | None = None
     status: str | None = None
+    quality: float | None = None
+    provider_status: str | None = None
+    flags: list[str] = Field(default_factory=list)
 
 
 class RiskScoreMetadata(BaseModel):

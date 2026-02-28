@@ -40,3 +40,21 @@ class SatellitePropertyMissingError(SatelliteServiceError):
             code="SATELLITE_PROPERTY_MISSING",
             retryable=False,
         )
+
+
+class SatelliteComputationError(SatelliteServiceError):
+    def __init__(self, message: str, *, retryable: bool = False) -> None:
+        super().__init__(
+            message=message,
+            code="SATELLITE_COMPUTATION_ERROR",
+            retryable=retryable,
+        )
+
+
+class SatelliteCircuitOpenError(SatelliteServiceError):
+    def __init__(self, operation: str) -> None:
+        super().__init__(
+            message=f"Satellite provider circuit is open for operation: {operation}",
+            code="SATELLITE_PROVIDER_CIRCUIT_OPEN",
+            retryable=True,
+        )
