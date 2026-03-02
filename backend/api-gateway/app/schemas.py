@@ -115,11 +115,11 @@ class DebtStatus(str, Enum):
 
 class DecisionRequest(BaseModel):
     satellite_score: int = Field(ge=0, le=100)
-    debt_score: int = Field(ge=0, le=100)
+    debt_score: int | None = Field(default=None, ge=0, le=100)
     social_score: int = Field(ge=0, le=100)
     satellite_data_quality: float = Field(ge=0.0, le=1.0)
-    debt_to_income_ratio: float = Field(ge=0.0)
-    debt_status: DebtStatus
+    debt_to_income_ratio: float | None = Field(default=None, ge=0.0)
+    debt_status: DebtStatus | None = None
     social_verified_references: int = Field(ge=0, le=2)
     satellite_no_crop_history: bool = False
     satellite_fire_detected: bool = False
