@@ -29,6 +29,7 @@ from app.schemas import (
     DebtLayerScore,
     DecisionRequest,
     DecisionResponse,
+    DebtStatus,
     LayerScore,
     RiskScoreMetadata,
     RiskScoreResponse,
@@ -169,6 +170,45 @@ def _compute_overall_score(
     social_score: int,
 ) -> int:
     return round((0.40 * satellite_score) + (0.35 * debt_score) + (0.25 * social_score))
+
+
+def _resolve_debt_inputs(
+    *,
+    payload: DecisionRequest,
+    assessment: RiskAssessment | None,
+) -> tuple[int, float, DebtStatus]:
+    debt_score = payload.debt_score if payload.debt_score is not None else None
+    debt_ratio = payload.debt_to_income_ratio if payload.debt_to_income_ratio is not None else None
+    debt_status = payload.debt_status
+
+    if assessment is not None:
+        if debt_score is None:
+            debt_score = assessment.debt_score
+        if debt_ratio is None:
+            debt_ratio = assessment.debt_to_income_ratio
+        if debt_status is None and assessment.debt_status:
+            try:
+                debt_status = DebtStatus(assessment.debt_status)
+            except ValueError:
+                debt_status = None
+
+    if debt_score is None or debt_ratio is None or debt_status is None:
+        raise ValidationError(
+            code="DEBT_INPUT_INCOMPLETE",
+            message="Debt decision inputs are incomplete; ensure debt assessment has finished or provide debt fields explicitly",
+            status_code=422,
+            retryable=False,
+        )
+
+    if debt_status == DebtStatus.unverified:
+        raise ValidationError(
+            code="DEBT_STATUS_UNSUPPORTED",
+            message="Debt status 'unverified' is not accepted for decision finalization",
+            status_code=422,
+            retryable=False,
+        )
+
+    return debt_score, debt_ratio, debt_status
 
 
 def _evaluate_zone(payload: DecisionRequest) -> tuple[str, list[str]]:
@@ -530,14 +570,6 @@ def post_decision(
             retryable=False,
         )
 
-    overall_score = _compute_overall_score(
-        satellite_score=payload.satellite_score,
-        debt_score=payload.debt_score,
-        social_score=payload.social_score,
-    )
-    zone, reasons = _evaluate_zone(payload)
-    rationale = payload.rationale_override or "; ".join(reasons[:3])
-
     assessment = db.execute(
         select(RiskAssessment)
         .where(RiskAssessment.application_id == application_id)
@@ -550,8 +582,30 @@ def post_decision(
         db.add(assessment)
         db.flush()
 
+    resolved_debt_score, resolved_debt_ratio, resolved_debt_status = _resolve_debt_inputs(
+        payload=payload,
+        assessment=assessment,
+    )
+    resolved_payload = payload.model_copy(
+        update={
+            "debt_score": resolved_debt_score,
+            "debt_to_income_ratio": resolved_debt_ratio,
+            "debt_status": resolved_debt_status,
+        }
+    )
+
+    overall_score = _compute_overall_score(
+        satellite_score=resolved_payload.satellite_score,
+        debt_score=resolved_payload.debt_score,
+        social_score=resolved_payload.social_score,
+    )
+    zone, reasons = _evaluate_zone(resolved_payload)
+    rationale = resolved_payload.rationale_override or "; ".join(reasons[:3])
+
     assessment.satellite_score = payload.satellite_score
-    assessment.debt_score = payload.debt_score
+    assessment.debt_score = resolved_debt_score
+    assessment.debt_to_income_ratio = resolved_debt_ratio
+    assessment.debt_status = resolved_debt_status.value
     assessment.social_score = payload.social_score
     assessment.overall_score = overall_score
     assessment.traffic_light_status = zone
@@ -568,8 +622,8 @@ def post_decision(
         payload={
             "overall_score": overall_score,
             "traffic_light_status": zone,
-            "debt_to_income_ratio": payload.debt_to_income_ratio,
-            "debt_status": payload.debt_status.value,
+            "debt_to_income_ratio": resolved_debt_ratio,
+            "debt_status": resolved_debt_status.value,
             "reasons": reasons[:3],
             "upstream_dependency": "decision-engine",
         },
