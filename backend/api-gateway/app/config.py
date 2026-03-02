@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     satellite_retry_base_delay_seconds: float = 0.5
     satellite_circuit_breaker_failure_threshold: int = 5
     satellite_circuit_breaker_reset_seconds: int = 60
+    debt_provider_mode: str = "mock"
+    debt_request_timeout_seconds: float = 5.0
+    debt_retry_attempts: int = 2
+    debt_retry_base_delay_seconds: float = 0.25
+    debt_circuit_breaker_failure_threshold: int = 3
+    debt_circuit_breaker_reset_seconds: int = 60
 
 
 settings = Settings()

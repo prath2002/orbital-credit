@@ -26,6 +26,7 @@ from app.schemas import (
     ApplicationStatus,
     BankerApplicationItem,
     BankerApplicationsResponse,
+    DebtLayerScore,
     DecisionRequest,
     DecisionResponse,
     LayerScore,
@@ -316,12 +317,19 @@ def analyze_farm(
         application_id=application.application_id,
         rationale="Risk assessment queued for satellite, debt, and social analysis",
         satellite_provider_status="pending",
+        debt_status="pending",
+        debt_provider_status="pending",
     )
     db.add(assessment)
     db.flush()
 
     orchestrator = AssessmentOrchestrator()
     orchestrator.run_satellite_assessment(
+        db=db,
+        application=application,
+        assessment=assessment,
+    )
+    orchestrator.run_debt_assessment(
         db=db,
         application=application,
         assessment=assessment,
@@ -390,7 +398,16 @@ def get_risk_score(
         return RiskScoreResponse(
             application_id=application.application_id,
             satellite=LayerScore(score=None, status="pending", quality=None, provider_status="pending", flags=[]),
-            debt=LayerScore(score=None, status="pending"),
+            debt=DebtLayerScore(
+                score=None,
+                status="pending",
+                provider_status="pending",
+                flags=[],
+                existing_debt=None,
+                proposed_debt=None,
+                estimated_income=None,
+                debt_to_income_ratio=None,
+            ),
             social=LayerScore(score=None, status="pending"),
             overall_score=None,
             traffic_light_status=None,
@@ -411,9 +428,15 @@ def get_risk_score(
             provider_status=assessment.satellite_provider_status,
             flags=assessment.satellite_flags or [],
         ),
-        debt=LayerScore(
+        debt=DebtLayerScore(
             score=assessment.debt_score,
-            status=_layer_status(assessment.debt_score),
+            status=assessment.debt_status if assessment.debt_status else _layer_status(assessment.debt_score),
+            provider_status=assessment.debt_provider_status,
+            flags=assessment.debt_flags or [],
+            existing_debt=assessment.debt_existing_amount,
+            proposed_debt=assessment.debt_proposed_amount,
+            estimated_income=assessment.debt_estimated_income,
+            debt_to_income_ratio=assessment.debt_to_income_ratio,
         ),
         social=LayerScore(
             score=assessment.social_score,

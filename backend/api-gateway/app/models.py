@@ -93,6 +93,20 @@ class RiskAssessment(Base):
     )
     satellite_computed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     debt_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    debt_status: Mapped[str] = mapped_column(
+        String(30), nullable=False, server_default=text("'pending'"), default="pending"
+    )
+    debt_provider_status: Mapped[str] = mapped_column(
+        String(30), nullable=False, server_default=text("'pending'"), default="pending"
+    )
+    debt_flags: Mapped[list[str] | None] = mapped_column(
+        JSONB, nullable=True, server_default=text("'[]'::jsonb")
+    )
+    debt_existing_amount: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    debt_proposed_amount: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    debt_estimated_income: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    debt_to_income_ratio: Mapped[float | None] = mapped_column(Float, nullable=True)
+    debt_computed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     social_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     overall_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     traffic_light_status: Mapped[str | None] = mapped_column(String(20), nullable=True)
