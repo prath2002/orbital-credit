@@ -66,6 +66,13 @@ class LayerScore(BaseModel):
     flags: list[str] = Field(default_factory=list)
 
 
+class DebtLayerScore(LayerScore):
+    existing_debt: int | None = None
+    proposed_debt: int | None = None
+    estimated_income: int | None = None
+    debt_to_income_ratio: float | None = None
+
+
 class RiskScoreMetadata(BaseModel):
     created_at: datetime
     processing_time_seconds: int
@@ -75,7 +82,7 @@ class RiskScoreMetadata(BaseModel):
 class RiskScoreResponse(BaseModel):
     application_id: UUID
     satellite: LayerScore
-    debt: LayerScore
+    debt: DebtLayerScore
     social: LayerScore
     overall_score: int | None = None
     traffic_light_status: str | None = None

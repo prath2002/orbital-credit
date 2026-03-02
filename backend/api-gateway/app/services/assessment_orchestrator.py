@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 from app.core.audit import emit_audit_event
 from app.core.logging import log_event
 from app.models import LoanApplication, RiskAssessment
+from app.services.debt.client import DebtServiceClient
+from app.services.debt.models import DebtConsentState
 from app.services.satellite.feature_extractor import SatelliteFeatureExtractor
 
 
@@ -33,8 +35,13 @@ def _compute_satellite_score(
 
 
 class AssessmentOrchestrator:
-    def __init__(self, extractor: SatelliteFeatureExtractor | None = None) -> None:
+    def __init__(
+        self,
+        extractor: SatelliteFeatureExtractor | None = None,
+        debt_client: DebtServiceClient | None = None,
+    ) -> None:
         self.extractor = extractor or SatelliteFeatureExtractor()
+        self.debt_client = debt_client or DebtServiceClient()
 
     def run_satellite_assessment(
         self,
@@ -117,6 +124,86 @@ class AssessmentOrchestrator:
             log_event(
                 level="ERROR",
                 event="assessment_satellite_failed",
+                application_id=str(application.application_id),
+                payload={"error_type": type(exc).__name__},
+            )
+
+    def run_debt_assessment(
+        self,
+        *,
+        db: Session,
+        application: LoanApplication,
+        assessment: RiskAssessment,
+    ) -> None:
+        try:
+            result = self.debt_client.assess(
+                farmer_mobile=application.farmer_mobile,
+                loan_amount=application.loan_amount,
+            )
+            assessment.debt_score = result.debt_score
+            assessment.debt_status = result.consent_state.value
+            assessment.debt_provider_status = result.provider_status
+            assessment.debt_flags = sorted(set(result.flags))
+            assessment.debt_existing_amount = result.existing_debt
+            assessment.debt_proposed_amount = result.proposed_debt
+            assessment.debt_estimated_income = result.estimated_income
+            assessment.debt_to_income_ratio = result.debt_to_income_ratio
+            assessment.debt_computed_at = datetime.now(timezone.utc)
+
+            emit_audit_event(
+                db=db,
+                event="debt_assessment_completed",
+                actor_type="service",
+                actor_id="DEBT-SERVICE",
+                application_id=application.application_id,
+                payload={
+                    "debt_status": result.consent_state.value,
+                    "debt_score": result.debt_score,
+                    "debt_existing_amount": result.existing_debt,
+                    "debt_proposed_amount": result.proposed_debt,
+                    "debt_estimated_income": result.estimated_income,
+                    "debt_to_income_ratio": result.debt_to_income_ratio,
+                    "debt_provider_status": result.provider_status,
+                    "flags": assessment.debt_flags,
+                    "upstream_dependency": "debt-provider",
+                },
+            )
+            log_event(
+                event="assessment_debt_persisted",
+                application_id=str(application.application_id),
+                payload={
+                    "debt_status": result.consent_state.value,
+                    "debt_score_present": result.debt_score is not None,
+                    "debt_to_income_ratio": result.debt_to_income_ratio,
+                    "debt_provider_status": result.provider_status,
+                },
+            )
+        except Exception as exc:  # pragma: no cover - provider failure path
+            assessment.debt_score = None
+            assessment.debt_status = DebtConsentState.provider_unavailable.value
+            assessment.debt_provider_status = "failed"
+            assessment.debt_flags = [f"debt_error:{type(exc).__name__}", "manual_review_required"]
+            assessment.debt_existing_amount = None
+            assessment.debt_proposed_amount = None
+            assessment.debt_estimated_income = None
+            assessment.debt_to_income_ratio = None
+            assessment.debt_computed_at = datetime.now(timezone.utc)
+
+            emit_audit_event(
+                db=db,
+                event="debt_assessment_failed",
+                actor_type="service",
+                actor_id="DEBT-SERVICE",
+                application_id=application.application_id,
+                payload={
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc),
+                    "upstream_dependency": "debt-provider",
+                },
+            )
+            log_event(
+                level="ERROR",
+                event="assessment_debt_failed",
                 application_id=str(application.application_id),
                 payload={"error_type": type(exc).__name__},
             )
