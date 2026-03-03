@@ -108,8 +108,21 @@ class RiskAssessment(Base):
     debt_to_income_ratio: Mapped[float | None] = mapped_column(Float, nullable=True)
     debt_computed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     social_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    social_status: Mapped[str] = mapped_column(
+        String(30), nullable=False, server_default=text("'pending'"), default="pending"
+    )
+    social_provider_status: Mapped[str] = mapped_column(
+        String(30), nullable=False, server_default=text("'pending'"), default="pending"
+    )
+    social_flags: Mapped[list[str] | None] = mapped_column(
+        JSONB, nullable=True, server_default=text("'[]'::jsonb")
+    )
+    social_verified_references: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    social_computed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     overall_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     traffic_light_status: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    decision_rule_version: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    decision_rule_id: Mapped[str | None] = mapped_column(String(30), nullable=True)
     rationale: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
@@ -125,5 +138,27 @@ class TrustNetwork(Base):
     farmer_mobile: Mapped[str] = mapped_column(String(13), nullable=False)
     trust_score: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("50"))
     last_updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class JlgLinkage(Base):
+    __tablename__ = "jlg_linkages"
+
+    linkage_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    application_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("loan_applications.application_id"), nullable=True
+    )
+    farmer_mobile: Mapped[str] = mapped_column(String(13), nullable=False)
+    reference_mobile: Mapped[str] = mapped_column(String(13), nullable=False)
+    linkage_status: Mapped[str] = mapped_column(
+        String(30), nullable=False, server_default=text("'pending'"), default="pending"
+    )
+    linked_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

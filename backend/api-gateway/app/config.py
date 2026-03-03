@@ -30,6 +30,15 @@ class Settings(BaseSettings):
     debt_retry_base_delay_seconds: float = 0.25
     debt_circuit_breaker_failure_threshold: int = 3
     debt_circuit_breaker_reset_seconds: int = 60
+    social_provider_mode: str = "mock"
+    social_request_timeout_seconds: float = 5.0
+    social_retry_attempts: int = 2
+    social_retry_base_delay_seconds: float = 0.25
+    social_circuit_breaker_failure_threshold: int = 3
+    social_circuit_breaker_reset_seconds: int = 60
+    social_default_penalty_farmer_points: int = 12
+    social_default_penalty_reference_points: int = 8
+    decision_rule_version: str = "decision-rules-v1.0.0"
 
 
 settings = Settings()

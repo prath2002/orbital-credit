@@ -73,6 +73,10 @@ class DebtLayerScore(LayerScore):
     debt_to_income_ratio: float | None = None
 
 
+class SocialLayerScore(LayerScore):
+    verified_references: int | None = None
+
+
 class RiskScoreMetadata(BaseModel):
     created_at: datetime
     processing_time_seconds: int
@@ -83,7 +87,7 @@ class RiskScoreResponse(BaseModel):
     application_id: UUID
     satellite: LayerScore
     debt: DebtLayerScore
-    social: LayerScore
+    social: SocialLayerScore
     overall_score: int | None = None
     traffic_light_status: str | None = None
     rationale: str | None = None
@@ -116,11 +120,11 @@ class DebtStatus(str, Enum):
 class DecisionRequest(BaseModel):
     satellite_score: int = Field(ge=0, le=100)
     debt_score: int | None = Field(default=None, ge=0, le=100)
-    social_score: int = Field(ge=0, le=100)
+    social_score: int | None = Field(default=None, ge=0, le=100)
     satellite_data_quality: float = Field(ge=0.0, le=1.0)
     debt_to_income_ratio: float | None = Field(default=None, ge=0.0)
     debt_status: DebtStatus | None = None
-    social_verified_references: int = Field(ge=0, le=2)
+    social_verified_references: int | None = Field(default=None, ge=0, le=2)
     satellite_no_crop_history: bool = False
     satellite_fire_detected: bool = False
     identity_verification_failed: bool = False
@@ -135,6 +139,31 @@ class DecisionResponse(BaseModel):
     traffic_light_status: str
     status: ApplicationStatus
     rationale: str
+    yellow_explanation: "YellowExplanationBundle | None" = None
+    decision_rule_version: str | None = None
+    decision_rule_id: str | None = None
+
+
+class YellowExplanationBundle(BaseModel):
+    primary_reasons: list[str] = Field(default_factory=list, max_length=3)
+    missing_or_low_confidence_data: list[str] = Field(default_factory=list)
+    recommended_manual_checks: list[str] = Field(default_factory=list)
+    expected_impact_if_approved: str
+    expected_impact_if_rejected: str
+
+
+class DefaultPenaltyReference(BaseModel):
+    reference_mobile: str
+    trust_score_before: int
+    trust_score_after: int
+
+
+class SocialDefaultPenaltyResponse(BaseModel):
+    application_id: UUID
+    farmer_mobile: str
+    farmer_trust_before: int
+    farmer_trust_after: int
+    impacted_references: list[DefaultPenaltyReference] = Field(default_factory=list)
 
 
 class ErrorDetail(BaseModel):
