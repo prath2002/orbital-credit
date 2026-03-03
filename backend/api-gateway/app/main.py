@@ -17,6 +17,8 @@ from app.core.request_context import set_application_id
 from app.db import get_db
 from app.models import FarmerReference, LoanApplication, RiskAssessment
 from app.services.assessment_orchestrator import AssessmentOrchestrator
+from app.services.decision_engine import DecisionEngine
+from app.services.social.penalty import SocialPenaltyService
 from app.services.satellite.connectivity_check import SatelliteConnectivityChecker
 from app.services.satellite.feature_extractor import SatelliteFeatureExtractor
 from app.services.satellite.models import ConnectivityCheckResult, SatelliteFeatureResult
@@ -33,11 +35,15 @@ from app.schemas import (
     LayerScore,
     RiskScoreMetadata,
     RiskScoreResponse,
+    SocialDefaultPenaltyResponse,
+    SocialLayerScore,
+    YellowExplanationBundle,
 )
 
 
 app = FastAPI(title="Orbital Credit API Gateway", version="0.1.0")
 app.add_middleware(CorrelationIdMiddleware)
+decision_engine = DecisionEngine()
 
 
 @app.on_event("startup")
@@ -169,7 +175,11 @@ def _compute_overall_score(
     debt_score: int,
     social_score: int,
 ) -> int:
-    return round((0.40 * satellite_score) + (0.35 * debt_score) + (0.25 * social_score))
+    return decision_engine.compute_overall_score(
+        satellite_score=satellite_score,
+        debt_score=debt_score,
+        social_score=social_score,
+    )
 
 
 def _resolve_debt_inputs(
@@ -177,93 +187,19 @@ def _resolve_debt_inputs(
     payload: DecisionRequest,
     assessment: RiskAssessment | None,
 ) -> tuple[int, float, DebtStatus]:
-    debt_score = payload.debt_score if payload.debt_score is not None else None
-    debt_ratio = payload.debt_to_income_ratio if payload.debt_to_income_ratio is not None else None
-    debt_status = payload.debt_status
+    return decision_engine.resolve_debt_inputs(payload=payload, assessment=assessment)
 
-    if assessment is not None:
-        if debt_score is None:
-            debt_score = assessment.debt_score
-        if debt_ratio is None:
-            debt_ratio = assessment.debt_to_income_ratio
-        if debt_status is None and assessment.debt_status:
-            try:
-                debt_status = DebtStatus(assessment.debt_status)
-            except ValueError:
-                debt_status = None
 
-    if debt_score is None or debt_ratio is None or debt_status is None:
-        raise ValidationError(
-            code="DEBT_INPUT_INCOMPLETE",
-            message="Debt decision inputs are incomplete; ensure debt assessment has finished or provide debt fields explicitly",
-            status_code=422,
-            retryable=False,
-        )
-
-    if debt_status == DebtStatus.unverified:
-        raise ValidationError(
-            code="DEBT_STATUS_UNSUPPORTED",
-            message="Debt status 'unverified' is not accepted for decision finalization",
-            status_code=422,
-            retryable=False,
-        )
-
-    return debt_score, debt_ratio, debt_status
+def _resolve_social_inputs(
+    *,
+    payload: DecisionRequest,
+    assessment: RiskAssessment | None,
+) -> tuple[int, int]:
+    return decision_engine.resolve_social_inputs(payload=payload, assessment=assessment)
 
 
 def _evaluate_zone(payload: DecisionRequest) -> tuple[str, list[str]]:
-    reasons: list[str] = []
-
-    # Hard RED rules (highest precedence).
-    if payload.satellite_no_crop_history:
-        reasons.append("No crop history detected from satellite analysis")
-        return "RED", reasons
-    if payload.satellite_fire_detected:
-        reasons.append("Fire signal detected in satellite analysis")
-        return "RED", reasons
-    if payload.debt_to_income_ratio > 0.50:
-        reasons.append("Debt-to-income ratio exceeds 0.50")
-        return "RED", reasons
-    if payload.social_verified_references < 2:
-        reasons.append("Fewer than 2 verified references")
-        return "RED", reasons
-    if payload.identity_verification_failed:
-        reasons.append("Identity verification failed")
-        return "RED", reasons
-
-    # GREEN eligibility gates.
-    satellite_green = (
-        payload.satellite_score >= 80
-        and payload.satellite_data_quality >= 0.80
-        and not payload.satellite_fire_detected
-    )
-    debt_green = (
-        payload.debt_to_income_ratio <= 0.30
-        and payload.debt_status == "verified"
-    )
-    social_green = (
-        payload.social_score >= 70
-        and payload.social_verified_references == 2
-    )
-    if satellite_green and debt_green and social_green:
-        reasons.append("All green eligibility gates satisfied")
-        return "GREEN", reasons
-
-    # Default YELLOW with primary reasons.
-    if payload.satellite_data_quality < 0.80:
-        reasons.append("Satellite data quality below 0.80")
-    if payload.debt_status in {"timeout", "provider_unavailable", "consent_pending"}:
-        reasons.append("Debt status is not fully verified")
-    borderline = (
-        (60 <= payload.satellite_score <= 79)
-        or (0.31 <= payload.debt_to_income_ratio <= 0.50)
-        or (40 <= payload.social_score <= 69)
-    )
-    if borderline:
-        reasons.append("One or more inputs are in borderline range")
-    if not reasons:
-        reasons.append("Manual review required by safe default rule")
-    return "YELLOW", reasons
+    return decision_engine.evaluate_zone(payload)
 
 
 @app.get("/health")
@@ -359,6 +295,8 @@ def analyze_farm(
         satellite_provider_status="pending",
         debt_status="pending",
         debt_provider_status="pending",
+        social_status="pending",
+        social_provider_status="pending",
     )
     db.add(assessment)
     db.flush()
@@ -370,6 +308,11 @@ def analyze_farm(
         assessment=assessment,
     )
     orchestrator.run_debt_assessment(
+        db=db,
+        application=application,
+        assessment=assessment,
+    )
+    orchestrator.run_social_assessment(
         db=db,
         application=application,
         assessment=assessment,
@@ -448,7 +391,13 @@ def get_risk_score(
                 estimated_income=None,
                 debt_to_income_ratio=None,
             ),
-            social=LayerScore(score=None, status="pending"),
+            social=SocialLayerScore(
+                score=None,
+                status="pending",
+                provider_status="pending",
+                flags=[],
+                verified_references=None,
+            ),
             overall_score=None,
             traffic_light_status=None,
             rationale="Risk assessment is still processing",
@@ -478,9 +427,12 @@ def get_risk_score(
             estimated_income=assessment.debt_estimated_income,
             debt_to_income_ratio=assessment.debt_to_income_ratio,
         ),
-        social=LayerScore(
+        social=SocialLayerScore(
             score=assessment.social_score,
-            status=_layer_status(assessment.social_score),
+            status=assessment.social_status if assessment.social_status else _layer_status(assessment.social_score),
+            provider_status=assessment.social_provider_status,
+            flags=assessment.social_flags or [],
+            verified_references=assessment.social_verified_references,
         ),
         overall_score=assessment.overall_score,
         traffic_light_status=assessment.traffic_light_status,
@@ -582,33 +534,37 @@ def post_decision(
         db.add(assessment)
         db.flush()
 
-    resolved_debt_score, resolved_debt_ratio, resolved_debt_status = _resolve_debt_inputs(
+    resolved = decision_engine.resolve_inputs(
         payload=payload,
         assessment=assessment,
     )
-    resolved_payload = payload.model_copy(
-        update={
-            "debt_score": resolved_debt_score,
-            "debt_to_income_ratio": resolved_debt_ratio,
-            "debt_status": resolved_debt_status,
-        }
-    )
 
     overall_score = _compute_overall_score(
-        satellite_score=resolved_payload.satellite_score,
-        debt_score=resolved_payload.debt_score,
-        social_score=resolved_payload.social_score,
+        satellite_score=resolved.payload.satellite_score,
+        debt_score=resolved.debt_score,
+        social_score=resolved.social_score,
     )
-    zone, reasons = _evaluate_zone(resolved_payload)
-    rationale = resolved_payload.rationale_override or "; ".join(reasons[:3])
+    zone, reasons = _evaluate_zone(resolved.payload)
+    rationale = resolved.payload.rationale_override or "; ".join(reasons[:3])
+    matched_rule_id = decision_engine.extract_rule_id(reasons[0]) if reasons else None
+    rule_version = decision_engine.rule_version
+    yellow_explanation: YellowExplanationBundle | None = None
+    if zone == "YELLOW":
+        yellow_explanation = decision_engine.build_yellow_explanation(
+            payload=resolved.payload,
+            reasons=reasons,
+        )
 
     assessment.satellite_score = payload.satellite_score
-    assessment.debt_score = resolved_debt_score
-    assessment.debt_to_income_ratio = resolved_debt_ratio
-    assessment.debt_status = resolved_debt_status.value
-    assessment.social_score = payload.social_score
+    assessment.debt_score = resolved.debt_score
+    assessment.debt_to_income_ratio = resolved.debt_to_income_ratio
+    assessment.debt_status = resolved.debt_status.value
+    assessment.social_score = resolved.social_score
+    assessment.social_verified_references = resolved.social_verified_references
     assessment.overall_score = overall_score
     assessment.traffic_light_status = zone
+    assessment.decision_rule_version = rule_version
+    assessment.decision_rule_id = matched_rule_id
     assessment.rationale = rationale
 
     application.status = ApplicationStatus.completed.value
@@ -622,9 +578,14 @@ def post_decision(
         payload={
             "overall_score": overall_score,
             "traffic_light_status": zone,
-            "debt_to_income_ratio": resolved_debt_ratio,
-            "debt_status": resolved_debt_status.value,
+            "debt_to_income_ratio": resolved.debt_to_income_ratio,
+            "debt_status": resolved.debt_status.value,
             "reasons": reasons[:3],
+            "decision_rule_version": rule_version,
+            "decision_rule_id": matched_rule_id,
+            "yellow_explanation": (
+                yellow_explanation.model_dump() if yellow_explanation is not None else None
+            ),
             "upstream_dependency": "decision-engine",
         },
     )
@@ -647,4 +608,45 @@ def post_decision(
         traffic_light_status=zone,
         status=ApplicationStatus.completed,
         rationale=rationale,
+        yellow_explanation=yellow_explanation,
+        decision_rule_version=rule_version,
+        decision_rule_id=matched_rule_id,
+    )
+
+
+@app.post(
+    "/api/v1/social/default-events/{application_id}",
+    response_model=SocialDefaultPenaltyResponse,
+)
+def post_social_default_event(
+    application_id: UUID,
+    request: Request,
+    actor_id: str = Query(default="SOCIAL-TRUST-SERVICE", min_length=1),
+    db: Session = Depends(get_db),
+) -> SocialDefaultPenaltyResponse:
+    request.state.application_id = str(application_id)
+    set_application_id(str(application_id))
+    application = db.get(LoanApplication, application_id)
+    if application is None:
+        raise ValidationError(
+            code="APPLICATION_NOT_FOUND",
+            message="Application not found",
+            status_code=404,
+            retryable=False,
+        )
+
+    penalty_service = SocialPenaltyService()
+    result = penalty_service.apply_default_event_penalty(
+        db=db,
+        application=application,
+        actor_id=actor_id,
+    )
+    db.commit()
+
+    return SocialDefaultPenaltyResponse(
+        application_id=application.application_id,
+        farmer_mobile=result.farmer_mobile,
+        farmer_trust_before=result.farmer_trust_before,
+        farmer_trust_after=result.farmer_trust_after,
+        impacted_references=[item.model_dump() for item in result.impacted_references],
     )
