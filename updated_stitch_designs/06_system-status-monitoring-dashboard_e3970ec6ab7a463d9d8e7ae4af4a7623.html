@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Orbital-Credit - System Status</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#137fec",
+              "background-light": "#f6f7f8",
+              "background-dark": "#101922",
+              "card-dark": "#18232e",
+              "border-dark": "#2d3b48",
+            },
+            fontFamily: {
+              "display": ["Manrope", "sans-serif"],
+              "mono": ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", "monospace"]
+            },
+            borderRadius: {
+              "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"
+            },
+          },
+        },
+      }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display antialiased overflow-hidden">
+<div class="flex h-screen w-full overflow-hidden">
+<!-- Sidebar -->
+<div class="flex w-64 flex-col justify-between border-r border-border-dark bg-background-dark p-4 shrink-0 overflow-y-auto">
+<div class="flex flex-col gap-6">
+<!-- Brand -->
+<div class="flex items-center gap-3 px-2">
+<div class="flex items-center justify-center rounded-lg bg-primary/20 p-2">
+<span class="material-symbols-outlined text-primary text-2xl">agriculture</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-white text-base font-bold leading-none">Orbital-Credit</h1>
+<p class="text-slate-400 text-xs font-normal mt-1">Agri-Loan Risk Platform</p>
+</div>
+</div>
+<!-- Navigation -->
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-400 hover:bg-white/5 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-400 hover:bg-white/5 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">description</span>
+<span class="text-sm font-medium">Loan Applications</span>
+</a>
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-400 hover:bg-white/5 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">map</span>
+<span class="text-sm font-medium">Risk Zones</span>
+</a>
+<a class="flex items-center gap-3 rounded-lg bg-primary/10 px-3 py-2 text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-xl filled">monitoring</span>
+<span class="text-sm font-bold">System Status</span>
+</a>
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-400 hover:bg-white/5 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+</nav>
+</div>
+<!-- User Profile -->
+<div class="flex items-center gap-3 rounded-lg border border-border-dark bg-card-dark p-3">
+<div class="size-9 rounded-full bg-cover bg-center" data-alt="Portrait of a user" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDMeYokPfivN6g-kL9WRoMEMsyV-m0KZOJ--3PAbvLb_KosvZ18lpoI438h-uTdrap4YvAGpNl_ebPkjKMJxowqngCmD6U6gYElfNl59YYnCTgSZOWy40RYDVjds7UlPbbyuUlzBx6TFBcREi3snhLetwdfBMUBAxHf9R9kLdWnGGSEm67SNAC0O0fQP6hqwh9hK4vfD71E5Zvp4lp1dBzS8WPf2sNR4fjDMQAo6DhgP_eXKbHaW2ib85twq_sQAsDlVvLXfutyN9k');"></div>
+<div class="flex flex-col overflow-hidden">
+<p class="truncate text-sm font-medium text-white">Alex Morgan</p>
+<p class="truncate text-xs text-slate-400">Lead Risk Analyst</p>
+</div>
+</div>
+</div>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto bg-background-dark">
+<div class="flex flex-col gap-6 p-6 lg:p-10 max-w-[1600px] mx-auto">
+<!-- Header -->
+<div class="flex flex-wrap items-end justify-between gap-4">
+<div class="flex flex-col gap-1">
+<h1 class="text-3xl font-bold tracking-tight text-white">System Status Monitoring</h1>
+<p class="text-slate-400 text-base">Real-time health check for external data providers and internal engines.</p>
+</div>
+<button class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95">
+<span class="material-symbols-outlined text-[20px]">network_check</span>
+                    Connectivity Check
+                </button>
+</div>
+<!-- Status KPI Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<!-- Card 1 -->
+<div class="flex flex-col justify-between rounded-xl border border-border-dark bg-card-dark p-6 shadow-sm hover:border-slate-600 transition-colors">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center rounded-lg bg-green-500/10 p-2 text-green-500">
+<span class="material-symbols-outlined">satellite_alt</span>
+</div>
+<h3 class="font-semibold text-white">Satellite Data Stream</h3>
+</div>
+<span class="inline-flex items-center rounded-full bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-500 ring-1 ring-inset ring-green-500/20">Operational</span>
+</div>
+<div class="mt-4">
+<p class="text-2xl font-bold text-white">99.9% <span class="text-sm font-normal text-slate-400">Uptime</span></p>
+<p class="mt-1 text-sm text-slate-500">Last updated: 2 mins ago</p>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="flex flex-col justify-between rounded-xl border border-border-dark bg-card-dark p-6 shadow-sm hover:border-slate-600 transition-colors">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center rounded-lg bg-yellow-500/10 p-2 text-yellow-500">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<h3 class="font-semibold text-white">Debt Provider API</h3>
+</div>
+<span class="inline-flex items-center rounded-full bg-yellow-500/10 px-2.5 py-0.5 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-500/20">Degraded</span>
+</div>
+<div class="mt-4">
+<p class="text-2xl font-bold text-white">High Latency <span class="text-sm font-normal text-slate-400">Detected</span></p>
+<p class="mt-1 text-sm text-slate-500">Investigation in progress</p>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="flex flex-col justify-between rounded-xl border border-border-dark bg-card-dark p-6 shadow-sm hover:border-slate-600 transition-colors">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center rounded-lg bg-primary/10 p-2 text-primary">
+<span class="material-symbols-outlined">psychology</span>
+</div>
+<h3 class="font-semibold text-white">Social Risk Engine</h3>
+</div>
+<span class="inline-flex items-center rounded-full bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-500 ring-1 ring-inset ring-green-500/20">Operational</span>
+</div>
+<div class="mt-4">
+<p class="text-2xl font-bold text-white">99.5% <span class="text-sm font-normal text-slate-400">Uptime</span></p>
+<p class="mt-1 text-sm text-slate-500">Optimal Performance</p>
+</div>
+</div>
+</div>
+<!-- Graphs Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Graph 1 -->
+<div class="flex flex-col rounded-xl border border-border-dark bg-card-dark p-6">
+<div class="flex items-center justify-between mb-4">
+<h4 class="font-semibold text-slate-200">Satellite Latency (ms)</h4>
+<div class="flex items-center gap-2 text-xs">
+<span class="text-slate-400">Last Hour</span>
+<span class="text-green-500 font-medium">-2%</span>
+</div>
+</div>
+<div class="mb-2">
+<span class="text-3xl font-bold text-white">45ms</span>
+<span class="text-sm text-slate-500 ml-1">avg</span>
+</div>
+<div class="relative h-32 w-full mt-4">
+<svg class="h-full w-full overflow-visible" preserveaspectratio="none" viewbox="0 0 100 40">
+<defs>
+<lineargradient id="gradientGreen" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#22c55e" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#22c55e" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path d="M0 35 C 10 32, 20 25, 30 28 C 40 31, 50 15, 60 20 C 70 25, 80 28, 90 22 C 95 18, 100 25, 100 25 V 40 H 0 V 35 Z" fill="url(#gradientGreen)"></path>
+<path d="M0 35 C 10 32, 20 25, 30 28 C 40 31, 50 15, 60 20 C 70 25, 80 28, 90 22 C 95 18, 100 25, 100 25" fill="none" stroke="#22c55e" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+</svg>
+<div class="absolute bottom-0 left-0 right-0 flex justify-between text-[10px] text-slate-500 pt-2 border-t border-slate-700/50">
+<span>10:00</span>
+<span>10:15</span>
+<span>10:30</span>
+<span>10:45</span>
+</div>
+</div>
+</div>
+<!-- Graph 2 -->
+<div class="flex flex-col rounded-xl border border-border-dark bg-card-dark p-6">
+<div class="flex items-center justify-between mb-4">
+<h4 class="font-semibold text-slate-200">Debt API Response (ms)</h4>
+<div class="flex items-center gap-2 text-xs">
+<span class="text-slate-400">Last Hour</span>
+<span class="text-red-500 font-medium">+15%</span>
+</div>
+</div>
+<div class="mb-2">
+<span class="text-3xl font-bold text-white">850ms</span>
+<span class="text-sm text-slate-500 ml-1">avg</span>
+</div>
+<div class="relative h-32 w-full mt-4">
+<svg class="h-full w-full overflow-visible" preserveaspectratio="none" viewbox="0 0 100 40">
+<defs>
+<lineargradient id="gradientRed" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#eab308" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#eab308" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path d="M0 30 C 15 28, 25 20, 35 15 C 45 10, 55 12, 65 25 C 75 38, 85 20, 100 10 V 40 H 0 V 30 Z" fill="url(#gradientRed)"></path>
+<path d="M0 30 C 15 28, 25 20, 35 15 C 45 10, 55 12, 65 25 C 75 38, 85 20, 100 10" fill="none" stroke="#eab308" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+</svg>
+<div class="absolute bottom-0 left-0 right-0 flex justify-between text-[10px] text-slate-500 pt-2 border-t border-slate-700/50">
+<span>10:00</span>
+<span>10:15</span>
+<span>10:30</span>
+<span>10:45</span>
+</div>
+</div>
+</div>
+<!-- Graph 3 -->
+<div class="flex flex-col rounded-xl border border-border-dark bg-card-dark p-6">
+<div class="flex items-center justify-between mb-4">
+<h4 class="font-semibold text-slate-200">Risk Engine Throughput</h4>
+<div class="flex items-center gap-2 text-xs">
+<span class="text-slate-400">Last Hour</span>
+<span class="text-green-500 font-medium">+5%</span>
+</div>
+</div>
+<div class="mb-2">
+<span class="text-3xl font-bold text-white">120</span>
+<span class="text-sm text-slate-500 ml-1">req/s</span>
+</div>
+<div class="relative h-32 w-full mt-4">
+<svg class="h-full w-full overflow-visible" preserveaspectratio="none" viewbox="0 0 100 40">
+<defs>
+<lineargradient id="gradientPrimary" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#137fec" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#137fec" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path d="M0 35 C 20 35, 30 30, 40 25 C 50 20, 60 22, 70 15 C 80 8, 90 12, 100 10 V 40 H 0 V 35 Z" fill="url(#gradientPrimary)"></path>
+<path d="M0 35 C 20 35, 30 30, 40 25 C 50 20, 60 22, 70 15 C 80 8, 90 12, 100 10" fill="none" stroke="#137fec" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+</svg>
+<div class="absolute bottom-0 left-0 right-0 flex justify-between text-[10px] text-slate-500 pt-2 border-t border-slate-700/50">
+<span>10:00</span>
+<span>10:15</span>
+<span>10:30</span>
+<span>10:45</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Incidents Table -->
+<div class="flex flex-col rounded-xl border border-border-dark bg-card-dark overflow-hidden">
+<div class="flex items-center justify-between p-6 border-b border-border-dark">
+<h3 class="text-lg font-bold text-white">Recent Incidents</h3>
+<button class="text-sm text-primary hover:text-primary/80 font-medium">View All History</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm text-slate-400">
+<thead class="bg-background-dark/50 text-xs uppercase font-medium text-slate-500">
+<tr>
+<th class="px-6 py-4" scope="col">Severity</th>
+<th class="px-6 py-4" scope="col">Service</th>
+<th class="px-6 py-4" scope="col">Message</th>
+<th class="px-6 py-4" scope="col">Correlation ID</th>
+<th class="px-6 py-4" scope="col">Timestamp</th>
+<th class="px-6 py-4" scope="col">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-dark">
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 rounded bg-red-500/10 px-2 py-1 text-xs font-medium text-red-500 ring-1 ring-inset ring-red-500/20">
+                                        Critical
+                                    </span>
+</td>
+<td class="px-6 py-4 font-medium text-white">Debt Provider API</td>
+<td class="px-6 py-4">Connection timeout &gt; 5000ms</td>
+<td class="px-6 py-4 font-mono text-xs">req_8923a_x92</td>
+<td class="px-6 py-4">Oct 24, 10:42 AM</td>
+<td class="px-6 py-4 text-white">
+<div class="flex items-center gap-2">
+<div class="h-1.5 w-1.5 rounded-full bg-yellow-500 animate-pulse"></div>
+<span>Investigating</span>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 rounded bg-yellow-500/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-500/20">
+                                        Warning
+                                    </span>
+</td>
+<td class="px-6 py-4 font-medium text-white">Satellite Data Stream</td>
+<td class="px-6 py-4">Intermittent packet loss (2%)</td>
+<td class="px-6 py-4 font-mono text-xs">sat_data_v99</td>
+<td class="px-6 py-4">Oct 24, 09:15 AM</td>
+<td class="px-6 py-4 text-white">
+<div class="flex items-center gap-2">
+<div class="h-1.5 w-1.5 rounded-full bg-green-500"></div>
+<span>Resolved</span>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 rounded bg-blue-500/10 px-2 py-1 text-xs font-medium text-blue-500 ring-1 ring-inset ring-blue-500/20">
+                                        Info
+                                    </span>
+</td>
+<td class="px-6 py-4 font-medium text-white">Social Risk Engine</td>
+<td class="px-6 py-4">Scheduled maintenance completed</td>
+<td class="px-6 py-4 font-mono text-xs">maint_sched_01</td>
+<td class="px-6 py-4">Oct 23, 11:00 PM</td>
+<td class="px-6 py-4 text-white">
+<div class="flex items-center gap-2">
+<div class="h-1.5 w-1.5 rounded-full bg-green-500"></div>
+<span>Completed</span>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Server Details Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
+<!-- Regional Clusters -->
+<div class="rounded-xl border border-border-dark bg-card-dark p-6">
+<h3 class="text-lg font-bold text-white mb-4">Regional Cluster Status</h3>
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between p-3 rounded-lg bg-background-dark border border-border-dark">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+<span class="text-sm font-medium text-white">EU-Central (Frankfurt)</span>
+</div>
+<span class="text-xs text-slate-400 font-mono">12ms latency</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-lg bg-background-dark border border-border-dark">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+<span class="text-sm font-medium text-white">US-East (N. Virginia)</span>
+</div>
+<span class="text-xs text-slate-400 font-mono">84ms latency</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-lg bg-background-dark border border-border-dark">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)]"></div>
+<span class="text-sm font-medium text-white">AP-South (Mumbai)</span>
+</div>
+<span class="text-xs text-slate-400 font-mono">210ms latency</span>
+</div>
+</div>
+</div>
+<!-- Database Metrics -->
+<div class="rounded-xl border border-border-dark bg-card-dark p-6">
+<h3 class="text-lg font-bold text-white mb-4">Database Health</h3>
+<div class="space-y-4">
+<div>
+<div class="flex justify-between text-sm mb-1">
+<span class="text-slate-400">Primary DB Load</span>
+<span class="text-white font-medium">42%</span>
+</div>
+<div class="h-2 w-full bg-background-dark rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[42%] rounded-full"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-sm mb-1">
+<span class="text-slate-400">Replica Lag</span>
+<span class="text-white font-medium">0.02s</span>
+</div>
+<div class="h-2 w-full bg-background-dark rounded-full overflow-hidden">
+<div class="h-full bg-green-500 w-[5%] rounded-full"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-sm mb-1">
+<span class="text-slate-400">Disk Usage (IOPS)</span>
+<span class="text-white font-medium">78%</span>
+</div>
+<div class="h-2 w-full bg-background-dark rounded-full overflow-hidden">
+<div class="h-full bg-yellow-500 w-[78%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

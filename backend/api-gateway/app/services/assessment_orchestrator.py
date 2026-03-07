@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.audit import emit_audit_event
 from app.core.logging import log_event
+from app.core.metrics import metrics_registry
 from app.models import FarmerReference, JlgLinkage, LoanApplication, RiskAssessment, TrustNetwork
 from app.services.debt.client import DebtServiceClient
 from app.services.debt.models import DebtConsentState
@@ -105,6 +106,8 @@ class AssessmentOrchestrator:
                 "degraded" if features.provider_degraded else "available"
             )
             assessment.satellite_computed_at = datetime.now(timezone.utc)
+            if features.data_quality < 0.8:
+                metrics_registry.increment_data_quality_low()
 
             emit_audit_event(
                 db=db,

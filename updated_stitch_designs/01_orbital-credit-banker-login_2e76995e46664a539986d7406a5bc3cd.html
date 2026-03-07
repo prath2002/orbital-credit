@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Orbital-Credit Banker Login</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for webkit browsers */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1c2127;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3b4754;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5a6b;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased overflow-hidden">
+<div class="flex h-screen w-full flex-row overflow-hidden relative">
+<!-- Left Side: Login Form -->
+<div class="flex flex-col flex-1 items-center justify-center p-6 lg:p-12 relative z-10 bg-background-light dark:bg-background-dark w-full lg:w-1/2 xl:w-[45%]">
+<!-- Logo Header (Mobile/Desktop) -->
+<div class="absolute top-8 left-8 lg:left-12 flex items-center gap-3">
+<div class="size-8 flex items-center justify-center rounded bg-primary/20 text-primary">
+<span class="material-symbols-outlined !text-[24px]">satellite_alt</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold tracking-tight">Orbital-Credit</h2>
+</div>
+<div class="w-full max-w-[420px] flex flex-col gap-8">
+<div class="flex flex-col gap-2">
+<h1 class="text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-slate-100">
+                        Welcome Back
+                    </h1>
+<p class="text-slate-500 dark:text-slate-400 text-base font-medium leading-relaxed">
+                        Secure access for risk assessment &amp; loan portfolio management.
+                    </p>
+</div>
+<form class="flex flex-col gap-5 w-full">
+<!-- ID / Email Input -->
+<div class="flex flex-col gap-2">
+<label class="text-slate-900 dark:text-slate-200 text-sm font-semibold leading-normal" for="email">
+                            Banker ID / Email
+                        </label>
+<div class="relative">
+<input class="form-input w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#1c2127] text-slate-900 dark:text-white h-12 px-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all duration-200" id="email" placeholder="Enter your ID or Email" type="text"/>
+<div class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+<span class="material-symbols-outlined !text-[20px]">person</span>
+</div>
+</div>
+</div>
+<!-- Password Input -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<label class="text-slate-900 dark:text-slate-200 text-sm font-semibold leading-normal" for="password">
+                                Password
+                            </label>
+<a class="text-primary text-sm font-semibold hover:underline" href="#">Forgot password?</a>
+</div>
+<div class="relative group">
+<input class="form-input w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#1c2127] text-slate-900 dark:text-white h-12 px-4 pr-12 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all duration-200" id="password" placeholder="Enter your password" type="password"/>
+<button class="absolute right-0 top-0 h-full w-12 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer" type="button">
+<span class="material-symbols-outlined !text-[20px]">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- Remember Me -->
+<div class="flex items-center gap-3 pt-1">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="h-5 w-5 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-[#1c2127] text-primary focus:ring-offset-0 focus:ring-2 focus:ring-primary/50 transition-colors" type="checkbox"/>
+<span class="text-slate-600 dark:text-slate-300 text-sm font-medium group-hover:text-slate-900 dark:group-hover:text-white transition-colors">Remember this device</span>
+</label>
+</div>
+<!-- Submit Button -->
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-primary hover:bg-blue-600 text-white text-base font-bold leading-normal tracking-[0.015em] shadow-lg shadow-primary/25 transition-all duration-200 mt-2">
+                        Sign In to Dashboard
+                    </button>
+</form>
+<div class="flex items-center gap-3 mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
+<button class="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-300 text-sm font-semibold">
+<span class="material-symbols-outlined !text-[18px]">lock</span>
+                        SSO Login
+                    </button>
+<button class="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-300 text-sm font-semibold">
+<span class="material-symbols-outlined !text-[18px]">support_agent</span>
+                        Support
+                    </button>
+</div>
+</div>
+<!-- Footer: System Status -->
+<div class="absolute bottom-6 w-full max-w-[420px] flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+<div class="flex items-center gap-2">
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+</span>
+                    System Status: Online
+                </div>
+<span>v2.4.0 (Stable)</span>
+</div>
+</div>
+<!-- Right Side: Image/Branding -->
+<div class="hidden lg:flex lg:w-1/2 xl:w-[55%] relative bg-slate-900 h-full overflow-hidden">
+<!-- Background Image -->
+<div class="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-overlay" data-alt="Satellite view of vibrant green circular agricultural fields" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCL4rfoJd47Thx_g4GYD1OTaed5Le7xMmYwPqwwMNaP2Bh524GNBLz0YKSuKsSMkJPQRzxQiIAyyHrKUVCREGasTxuMi3KBR4ujxcLc-ONSh7cj18DJLBOTdRGoIohbFyhY7z8XApj45-z3YXAUUErJH3Zlx1FkXA2FRN2rLNlonwG6Qb_BKSpolGt8uCYAeesNsrqvsHq8b4Ii5NRNBbRfqLDLo9Fr-KSU7SnB1Umzga_-W5RV5F2nst8cpleBVlm8L8dgIMyT0uk");'></div>
+<!-- Secondary Abstract Layer for Depth -->
+<div class="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-soft-light" data-alt="Abstract digital network connections over globe" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuALykMetDr8obSTBhRk4yglJpHNmvHVvRzapg8PqOz3eaG-aPYP3CC95hCgOecuF0c0P6irn8mSxLbTvH39qnZYgiFLLcSBPuD0AyIbO8qd3sEGNT43L7M5bkzp2jBrylIMUc94VsBSqj_D6ixDzujmCHrtnS5pj_ZvB8Z3XB2vZLnUsTgWKIPWtRfPOXNXBRkBweVaFxYjyXI-MkdH6u3Ni4O3U3Jv9G2HbMMW32RDSKsWboW05gLLQSLSyS04RYDJlCTZNyKpurQ");'></div>
+<!-- Gradient Overlay -->
+<div class="absolute inset-0 bg-gradient-to-t from-background-dark/90 via-background-dark/40 to-transparent"></div>
+<div class="absolute inset-0 bg-gradient-to-r from-background-dark via-transparent to-transparent"></div>
+<!-- Content Overlay -->
+<div class="relative z-10 flex flex-col justify-end h-full p-16 pb-20 w-full max-w-2xl">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-6 w-fit backdrop-blur-sm">
+<span class="material-symbols-outlined !text-[16px]">verified_user</span>
+                    Enterprise Security Enabled
+                </div>
+<h3 class="text-4xl xl:text-5xl font-bold text-white leading-tight mb-6">
+                    Smarter Farming Through Satellite Intelligence.
+                </h3>
+<p class="text-lg text-slate-300 leading-relaxed max-w-lg mb-8">
+                    Orbital-Credit provides real-time risk assessment tools and precision analytics for modern agricultural lending.
+                </p>
+<div class="flex gap-4">
+<div class="flex flex-col gap-1 p-4 rounded-lg bg-white/5 border border-white/10 backdrop-blur-md">
+<span class="text-2xl font-bold text-white">98.5%</span>
+<span class="text-xs text-slate-400 uppercase tracking-wide">Accuracy Rate</span>
+</div>
+<div class="flex flex-col gap-1 p-4 rounded-lg bg-white/5 border border-white/10 backdrop-blur-md">
+<span class="text-2xl font-bold text-white">24/7</span>
+<span class="text-xs text-slate-400 uppercase tracking-wide">Monitoring</span>
+</div>
+<div class="flex flex-col gap-1 p-4 rounded-lg bg-white/5 border border-white/10 backdrop-blur-md">
+<span class="text-2xl font-bold text-white">150+</span>
+<span class="text-xs text-slate-400 uppercase tracking-wide">Regions Covered</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>

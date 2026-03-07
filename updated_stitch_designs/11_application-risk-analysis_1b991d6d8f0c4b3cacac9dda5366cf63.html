@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Application Risk Analysis - Orbital-Credit</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display antialiased min-h-screen flex flex-col pb-24">
+<header class="sticky top-0 z-40 flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur px-10 py-3">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 text-slate-900 dark:text-white">
+<div class="size-8 text-primary">
+<svg fill="currentColor" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 4H17.3334V17.3334H30.6666V30.6666H44V44H4V4Z"></path>
+</svg>
+</div>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">Orbital-Credit</h2>
+</div>
+<label class="flex flex-col min-w-40 !h-10 max-w-64 hidden md:flex">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full relative group">
+<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</div>
+<input class="block w-full rounded-lg border-0 bg-slate-200 dark:bg-slate-800 py-1.5 pl-10 pr-3 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6" placeholder="Search applications..." type="search"/>
+</div>
+</label>
+</div>
+<div class="flex flex-1 justify-end gap-8">
+<nav class="hidden lg:flex items-center gap-9">
+<a class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary text-sm font-medium transition-colors" href="#">Dashboard</a>
+<a class="text-primary text-sm font-medium transition-colors" href="#">Applications</a>
+<a class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary text-sm font-medium transition-colors" href="#">Risk Models</a>
+<a class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary text-sm font-medium transition-colors" href="#">Settings</a>
+</nav>
+<button class="hidden sm:flex items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary hover:bg-blue-600 text-white text-sm font-bold shadow-lg shadow-blue-900/20 transition-all">
+<span class="truncate">New Application</span>
+</button>
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 ring-2 ring-slate-200 dark:ring-slate-700" data-alt="User profile avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAFAAsh5GSjpQhfycrL75_liATOuavbEZpyVeOMWToJY_F_eYtUqnBTl3RIxEimmUgGW6G_lyyaOIFGWTxVHERAo8C5TjF92S_W1JyhI7h8qUFJeJcpYt20uiln3vofKYZ0ICulUfHTySwt-5uRstCOHsr0fI8uvQRQkPosvvB3Tzb5mOCopsdmYRe_8NZ1HLjHp_S--1YWGQg0tWvEXHSWSs3hSqBW9aIg7hReYc452ZFE0Z_o4dVM2ZWNd_SZ9aSz2jC9VxR_tfQ");'></div>
+</div>
+</header>
+<main class="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
+<div class="mb-8">
+<div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-2">
+<a class="hover:text-primary" href="#">Applications</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-slate-900 dark:text-white font-medium">#5021</span>
+</div>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div>
+<h1 class="text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-2">Application #5021 - Risk Analysis</h1>
+<p class="text-slate-500 dark:text-slate-400 font-medium">Farm: Delta River Plantations | Region: South-East | Crop: Rice</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-200 transition-colors">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                        Export Report
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-200 transition-colors">
+<span class="material-symbols-outlined text-[18px]">share</span>
+                        Share
+                    </button>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<div class="lg:col-span-4 flex flex-col gap-6">
+<div class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-[120px] text-red-500">dangerous</span>
+</div>
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white">Overall Risk</h3>
+<span class="px-3 py-1 rounded-full text-xs font-bold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 uppercase tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">block</span>
+                            Auto-Reject
+                        </span>
+</div>
+<div class="flex flex-col items-center justify-center py-4 relative">
+<div class="relative size-40">
+<svg class="size-full -rotate-90" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+<path class="text-slate-200 dark:text-slate-800" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="100, 100" stroke-width="3"></path>
+<path class="text-red-500" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="24, 100" stroke-width="3"></path>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">24</span>
+<span class="text-xs text-slate-500 uppercase font-semibold">Score</span>
+</div>
+</div>
+</div>
+<div class="mt-6 flex justify-between items-center text-sm border-t border-slate-100 dark:border-slate-800 pt-4">
+<span class="text-slate-500 dark:text-slate-400">Previous Cycle: 45</span>
+<span class="text-red-500 font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">trending_down</span> -21% Deteriorated
+                        </span>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex-1">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Signal Contribution</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Weighted analysis of critical risk factors</p>
+<div class="flex flex-col gap-5">
+<div class="space-y-2">
+<div class="flex justify-between text-sm font-medium">
+<span class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+<span class="material-symbols-outlined text-[18px] text-red-500">flood</span>
+                                    Flood Risk
+                                </span>
+<span class="text-red-600 dark:text-red-400 font-bold">Severe</span>
+</div>
+<div class="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-red-500 rounded-full w-[95%]"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-sm font-medium">
+<span class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+<span class="material-symbols-outlined text-[18px] text-red-500">account_balance_wallet</span>
+                                    Debt Defaults
+                                </span>
+<span class="text-red-600 dark:text-red-400 font-bold">Critical</span>
+</div>
+<div class="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-red-500 rounded-full w-[88%]"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-sm font-medium">
+<span class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+<span class="material-symbols-outlined text-[18px] text-orange-400">group</span>
+                                    Social Reputation
+                                </span>
+<span class="text-orange-500">Low</span>
+</div>
+<div class="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-orange-400 rounded-full w-[30%]"></div>
+</div>
+</div>
+</div>
+<div class="mt-8 bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-100 dark:border-slate-800">
+<h4 class="text-xs uppercase font-bold text-slate-500 mb-3 tracking-wider">Geospatial Context</h4>
+<div class="h-32 w-full rounded-md bg-cover bg-center relative overflow-hidden" data-alt="Satellite map view of flooded farmland" data-location="Flood Zone Map" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBJLsQ8l0SjECbJTuvv80K4yFVqS4ZkMF5mmAC4tr7kGodg2_LSJQhEp5RVG7HzldyRiquYGm71DngzGf9UjOt6xEqXr3_VBX818bzg7VFGlKgdQ8GLwnb4pmT6sp6nd9eb4LulOU1X4PBRwogt91G2HfBU9LIvpnWFTU1UyNIyNwFevTpAlVf3tPF6lOuREs0L7qaMTStDmHLgl12fEeCC875SDjjK8MyzI4VbDzgqehkqNhfh1s-_EWfmTZgpKZxIuz1yCkmjEOU"); filter: sepia(0.5) hue-rotate(-50deg);'>
+<div class="absolute inset-0 bg-red-900/30 flex items-center justify-center">
+<button class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded shadow-sm backdrop-blur transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">water_drop</span>
+                                Flood Map
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="lg:col-span-8 flex flex-col gap-6">
+<div class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center gap-3 mb-6">
+<div class="p-2 bg-red-500/10 rounded-lg text-red-600 dark:text-red-400">
+<span class="material-symbols-outlined">gpp_bad</span>
+</div>
+<div>
+<h3 class="text-xl font-bold text-slate-900 dark:text-white">Rejection Analysis</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">Automated reasoning for RED zone categorization.</p>
+</div>
+</div>
+<div class="grid md:grid-cols-2 gap-6 mb-6">
+<div class="col-span-2 space-y-3">
+<h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-red-500 text-[18px]">report</span>
+                                Critical Rejection Factors
+                            </h4>
+<ul class="space-y-3">
+<li class="p-4 bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 rounded-lg text-sm text-slate-800 dark:text-slate-200 flex items-start gap-4">
+<div class="p-1.5 bg-red-100 dark:bg-red-900/50 rounded text-red-600 dark:text-red-400 mt-0.5">
+<span class="material-symbols-outlined text-[18px]">flood</span>
+</div>
+<div class="flex-1">
+<span class="block font-bold mb-1">Severe Satellite-Detected Flood Risk</span>
+<span class="text-slate-600 dark:text-slate-400">Recent SAR imagery confirms standing water in 85% of cultivable land. Historical models predict 90% crop failure probability for current season.</span>
+</div>
+</li>
+<li class="p-4 bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 rounded-lg text-sm text-slate-800 dark:text-slate-200 flex items-start gap-4">
+<div class="p-1.5 bg-red-100 dark:bg-red-900/50 rounded text-red-600 dark:text-red-400 mt-0.5">
+<span class="material-symbols-outlined text-[18px]">credit_card_off</span>
+</div>
+<div class="flex-1">
+<span class="block font-bold mb-1">Recent Debt Defaults</span>
+<span class="text-slate-600 dark:text-slate-400">Applicant has defaulted on two prior equipment loans within the last 18 months. Credit bureau score dropped by 120 points.</span>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="border-t border-slate-100 dark:border-slate-800 pt-6">
+<h4 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-500 text-[18px]">analytics</span>
+                            Secondary Risk Indicators
+                        </h4>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+<p class="text-xs font-bold text-slate-500 uppercase mb-1">Yield Forecast</p>
+<p class="text-sm font-medium text-slate-900 dark:text-white">Projected 1.2 tons/hectare (Regional Avg: 4.5)</p>
+</div>
+<div class="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+<p class="text-xs font-bold text-slate-500 uppercase mb-1">Input Costs</p>
+<p class="text-sm font-medium text-slate-900 dark:text-white">Cost-to-income ratio projected at 145% (Unviable)</p>
+</div>
+</div>
+</div>
+</div>
+<div class="grid md:grid-cols-2 gap-6">
+<div class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-full opacity-60 grayscale hover:grayscale-0 hover:opacity-100 transition-all">
+<h4 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-500 text-[18px]">check_circle</span>
+                            Theoretical Approval Impact
+                        </h4>
+<div class="space-y-4 flex-1">
+<div class="flex items-start gap-3">
+<div class="p-1.5 bg-slate-100 dark:bg-slate-800 rounded text-slate-500 shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-slate-200">High Default Probability</p>
+<p class="text-xs text-slate-500 leading-relaxed">Approval would likely result in Non-Performing Asset (NPA) classification within 6 months.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-full ring-2 ring-red-500/20">
+<h4 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-red-500 text-[18px]">shield</span>
+                            Rejection Benefit (Risk Avoidance)
+                        </h4>
+<div class="space-y-4 flex-1">
+<div class="flex items-start gap-3">
+<div class="p-1.5 bg-red-500/10 rounded text-red-500 shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[16px]">savings</span>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-slate-200">Capital Preservation</p>
+<p class="text-xs text-slate-500 leading-relaxed">Prevents exposure to $850k high-risk principal. Reallocates capital to lower-risk zone applications.</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="p-1.5 bg-red-500/10 rounded text-red-500 shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[16px]">verified_user</span>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-slate-200">Regulatory Compliance</p>
+<p class="text-xs text-slate-500 leading-relaxed">Adheres to strict lending protocols for flood-prone regions mandated by risk committee.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<div class="fixed bottom-0 left-0 right-0 z-50 p-4">
+<div class="max-w-4xl mx-auto bg-slate-900 dark:bg-slate-800 text-white rounded-2xl shadow-2xl border border-red-500/30 backdrop-blur-xl bg-opacity-95 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in-up">
+<div class="flex items-center gap-4 w-full sm:w-auto">
+<div class="bg-red-500 p-2 rounded-lg text-white animate-pulse">
+<span class="material-symbols-outlined">gpp_bad</span>
+</div>
+<div>
+<p class="text-sm font-bold text-red-100">Recommendation: REJECT</p>
+<p class="text-xs text-red-200/70">Risk score 24/100 falls below viable threshold.</p>
+</div>
+</div>
+<div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+<button class="flex-1 sm:flex-none px-6 py-2.5 rounded-lg border border-slate-600 hover:bg-slate-700 text-sm font-bold transition-all text-slate-200">
+                    Escalate to Committee
+                </button>
+<button class="flex-1 sm:flex-none px-8 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-bold shadow-lg shadow-red-900/40 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">close</span>
+                    Confirm Rejection
+                </button>
+</div>
+</div>
+</div>
+</body></html>

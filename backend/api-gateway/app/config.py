@@ -1,14 +1,27 @@
+import os
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(extra="ignore")
 
+    app_env: str = "dev"
     api_host: str = "0.0.0.0"
     api_port: int = 8000
+    rbac_enforced: bool = False
+    redis_enabled: bool = True
+    redis_url: str = "redis://localhost:6379/0"
+    idempotency_ttl_seconds: int = 3600
+    risk_score_cache_ttl_seconds: int = 30
+    data_retention_days: int = 90
     database_url: str = (
         "postgresql+psycopg://orbital_user:orbital_pass@localhost:5432/orbital_credit"
     )
+    aa_client_id: str | None = None
+    aa_client_secret: str | None = None
+    sms_provider_api_key: str | None = None
+    jwt_signing_key: str | None = None
     satellite_stac_url: str = "https://planetarycomputer.microsoft.com/api/stac/v1"
     satellite_collection_id: str = "sentinel-2-l2a"
     satellite_search_lookback_days: int = 60
@@ -41,4 +54,16 @@ class Settings(BaseSettings):
     decision_rule_version: str = "decision-rules-v1.0.0"
 
 
-settings = Settings()
+def _resolve_settings() -> Settings:
+    env_name = os.getenv("APP_ENV", "dev").strip().lower()
+    env_file_by_env = {
+        "dev": ".env.dev",
+        "stage": ".env.stage",
+        "prod": ".env.prod",
+    }
+    selected_env_file = env_file_by_env.get(env_name, ".env")
+    # Load env-specific file first, then generic .env as fallback.
+    return Settings(_env_file=(selected_env_file, ".env", ".env.local"))
+
+
+settings = _resolve_settings()

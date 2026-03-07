@@ -5,19 +5,25 @@ from uuid import UUID
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.core.audit import emit_audit_event
+from app.core.cache import cache_client
 from app.core.correlation import CorrelationIdMiddleware
 from app.core.errors import DomainError, SystemError, ValidationError
+from app.core.idempotency import request_fingerprint
 from app.core.logging import configure_logging, log_event
+from app.core.metrics import Timer, metrics_registry
+from app.core.rbac import ActorContext, Role, require_roles
 from app.core.request_context import set_application_id
 from app.db import get_db
 from app.models import FarmerReference, LoanApplication, RiskAssessment
 from app.services.assessment_orchestrator import AssessmentOrchestrator
 from app.services.decision_engine import DecisionEngine
+from app.services.retention import RetentionService
 from app.services.social.penalty import SocialPenaltyService
 from app.services.satellite.connectivity_check import SatelliteConnectivityChecker
 from app.services.satellite.feature_extractor import SatelliteFeatureExtractor
@@ -44,6 +50,11 @@ from app.schemas import (
 app = FastAPI(title="Orbital Credit API Gateway", version="0.1.0")
 app.add_middleware(CorrelationIdMiddleware)
 decision_engine = DecisionEngine()
+
+banker_or_ops_dependency = require_roles([Role.banker, Role.ops_admin])
+service_or_ops_dependency = require_roles([Role.system_service, Role.ops_admin])
+all_actor_roles_dependency = require_roles([Role.banker, Role.ops_admin, Role.system_service])
+ops_only_dependency = require_roles([Role.ops_admin])
 
 
 @app.on_event("startup")
@@ -208,10 +219,19 @@ def healthcheck() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/metrics")
+def metrics(_actor: ActorContext = Depends(service_or_ops_dependency)) -> PlainTextResponse:
+    return PlainTextResponse(
+        content=metrics_registry.render_prometheus(),
+        media_type="text/plain; version=0.0.4",
+    )
+
+
 @app.get("/api/v1/satellite/connectivity-check", response_model=ConnectivityCheckResult)
 def satellite_connectivity_check(
     latitude: float = Query(ge=-90, le=90),
     longitude: float = Query(ge=-180, le=180),
+    _actor: ActorContext = Depends(all_actor_roles_dependency),
 ) -> ConnectivityCheckResult:
     checker = SatelliteConnectivityChecker()
     return checker.run(latitude=latitude, longitude=longitude)
@@ -221,6 +241,7 @@ def satellite_connectivity_check(
 def satellite_features(
     latitude: float = Query(ge=-90, le=90),
     longitude: float = Query(ge=-180, le=180),
+    _actor: ActorContext = Depends(all_actor_roles_dependency),
 ) -> SatelliteFeatureResult:
     extractor = SatelliteFeatureExtractor()
     return extractor.extract(latitude=latitude, longitude=longitude)
@@ -232,7 +253,9 @@ def analyze_farm(
     request: Request,
     db: Session = Depends(get_db),
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+    actor: ActorContext = Depends(all_actor_roles_dependency),
 ) -> AnalyzeFarmResponse:
+    timer = Timer()
     log_event(
         event="analysis_received",
         payload={
@@ -244,8 +267,27 @@ def analyze_farm(
                 "longitude": payload.gps_coordinates.longitude,
             },
             "reference_count": len(payload.references),
+            "actor_id": actor.actor_id,
+            "actor_role": actor.actor_role.value,
         },
     )
+
+    payload_dict = payload.model_dump(mode="json")
+    fingerprint = request_fingerprint(payload_dict)
+    cache_keys = [f"idempotency:fingerprint:{fingerprint}"]
+    if idempotency_key:
+        cache_keys.insert(0, f"idempotency:header:{idempotency_key}")
+
+    for cache_key in cache_keys:
+        cached = cache_client.get_json(cache_key)
+        if cached:
+            log_event(
+                event="analysis_idempotent_cache_hit",
+                payload={"cache_key": cache_key, "banker_id": payload.banker_id},
+            )
+            response = AnalyzeFarmResponse.model_validate(cached)
+            metrics_registry.observe_analysis_latency_seconds(timer.elapsed_seconds())
+            return response
 
     if idempotency_key:
         existing = db.execute(
@@ -259,11 +301,13 @@ def analyze_farm(
                 application_id=str(existing.application_id),
                 payload={"idempotency_key_present": True},
             )
-            return AnalyzeFarmResponse(
+            response = AnalyzeFarmResponse(
                 application_id=existing.application_id,
                 status=ApplicationStatus(existing.status),
                 message="Application already accepted for processing",
             )
+            metrics_registry.observe_analysis_latency_seconds(timer.elapsed_seconds())
+            return response
 
     application = LoanApplication(
         banker_id=payload.banker_id,
@@ -321,8 +365,8 @@ def analyze_farm(
     emit_audit_event(
         db=db,
         event="application_created",
-        actor_type="banker",
-        actor_id=payload.banker_id,
+        actor_type=("banker" if actor.actor_role == Role.banker else "service"),
+        actor_id=actor.actor_id,
         application_id=application.application_id,
         payload={
             "loan_amount": payload.loan_amount,
@@ -338,11 +382,19 @@ def analyze_farm(
         payload={"status": "processing"},
     )
 
-    return AnalyzeFarmResponse(
+    response = AnalyzeFarmResponse(
         application_id=application.application_id,
         status=ApplicationStatus.processing,
         message="Application accepted for processing",
     )
+    for cache_key in cache_keys:
+        cache_client.set_json(
+            cache_key,
+            response.model_dump(mode="json"),
+            ttl_seconds=settings.idempotency_ttl_seconds,
+        )
+    metrics_registry.observe_analysis_latency_seconds(timer.elapsed_seconds())
+    return response
 
 
 @app.get("/api/v1/risk-score/{application_id}", response_model=RiskScoreResponse)
@@ -350,9 +402,15 @@ def get_risk_score(
     application_id: UUID,
     request: Request,
     db: Session = Depends(get_db),
+    _actor: ActorContext = Depends(all_actor_roles_dependency),
 ) -> RiskScoreResponse:
     request.state.application_id = str(application_id)
     set_application_id(str(application_id))
+    cache_key = f"risk_score:{application_id}"
+    cached = cache_client.get_json(cache_key)
+    if cached:
+        return RiskScoreResponse.model_validate(cached)
+
     application = db.get(LoanApplication, application_id)
     if application is None:
         raise ValidationError(
@@ -378,7 +436,7 @@ def get_risk_score(
     )
 
     if assessment is None:
-        return RiskScoreResponse(
+        response = RiskScoreResponse(
             application_id=application.application_id,
             satellite=LayerScore(score=None, status="pending", quality=None, provider_status="pending", flags=[]),
             debt=DebtLayerScore(
@@ -401,14 +459,49 @@ def get_risk_score(
             overall_score=None,
             traffic_light_status=None,
             rationale="Risk assessment is still processing",
+            yellow_explanation=None,
             metadata=RiskScoreMetadata(
                 created_at=application.created_at,
                 processing_time_seconds=processing_seconds,
                 data_quality_flags=["assessment_pending"],
             ),
         )
+        cache_client.set_json(
+            cache_key,
+            response.model_dump(mode="json"),
+            ttl_seconds=settings.risk_score_cache_ttl_seconds,
+        )
+        return response
 
-    return RiskScoreResponse(
+    yellow_explanation: YellowExplanationBundle | None = None
+    if assessment.traffic_light_status == "YELLOW" and assessment.satellite_score is not None:
+        debt_status_raw = (assessment.debt_status or DebtStatus.unverified.value).strip().lower()
+        try:
+            debt_status = DebtStatus(debt_status_raw)
+        except Exception:
+            debt_status = DebtStatus.unverified
+
+        score_payload = DecisionRequest(
+            satellite_score=assessment.satellite_score,
+            debt_score=assessment.debt_score,
+            social_score=assessment.social_score,
+            satellite_data_quality=assessment.satellite_quality or 0.0,
+            debt_to_income_ratio=assessment.debt_to_income_ratio,
+            debt_status=debt_status,
+            social_verified_references=assessment.social_verified_references,
+            satellite_no_crop_history=("no_crop_history" in (assessment.satellite_flags or [])),
+            satellite_fire_detected=("fire_detected" in (assessment.satellite_flags or [])),
+            identity_verification_failed=False,
+            rationale_override=assessment.rationale,
+            actor_id="system",
+        )
+        _, reasons = _evaluate_zone(score_payload)
+        yellow_explanation = decision_engine.build_yellow_explanation(
+            payload=score_payload,
+            reasons=reasons,
+        )
+
+    response = RiskScoreResponse(
         application_id=application.application_id,
         satellite=LayerScore(
             score=assessment.satellite_score,
@@ -437,6 +530,7 @@ def get_risk_score(
         overall_score=assessment.overall_score,
         traffic_light_status=assessment.traffic_light_status,
         rationale=assessment.rationale,
+        yellow_explanation=yellow_explanation,
         metadata=RiskScoreMetadata(
             created_at=assessment.created_at,
             processing_time_seconds=processing_seconds,
@@ -451,6 +545,12 @@ def get_risk_score(
             ),
         ),
     )
+    cache_client.set_json(
+        cache_key,
+        response.model_dump(mode="json"),
+        ttl_seconds=settings.risk_score_cache_ttl_seconds,
+    )
+    return response
 
 
 @app.get("/api/v1/applications/{banker_id}", response_model=BankerApplicationsResponse)
@@ -458,6 +558,7 @@ def get_banker_applications(
     banker_id: str,
     request: Request,
     db: Session = Depends(get_db),
+    _actor: ActorContext = Depends(banker_or_ops_dependency),
 ) -> BankerApplicationsResponse:
     request.state.application_id = None
     set_application_id(None)
@@ -510,6 +611,7 @@ def post_decision(
     payload: DecisionRequest,
     request: Request,
     db: Session = Depends(get_db),
+    actor: ActorContext = Depends(banker_or_ops_dependency),
 ) -> DecisionResponse:
     request.state.application_id = str(application_id)
     set_application_id(str(application_id))
@@ -534,6 +636,7 @@ def post_decision(
         db.add(assessment)
         db.flush()
 
+    payload = payload.model_copy(update={"actor_id": actor.actor_id})
     resolved = decision_engine.resolve_inputs(
         payload=payload,
         assessment=assessment,
@@ -545,7 +648,12 @@ def post_decision(
         social_score=resolved.social_score,
     )
     zone, reasons = _evaluate_zone(resolved.payload)
-    rationale = resolved.payload.rationale_override or "; ".join(reasons[:3])
+    action_prefix = {
+        "approve": "Approved by banker",
+        "reject": "Rejected by banker",
+        "escalate": "Escalated for manual review",
+    }.get(payload.manual_action.value, "Decision updated")
+    rationale = resolved.payload.rationale_override or f"{action_prefix}: {'; '.join(reasons[:3])}"
     matched_rule_id = decision_engine.extract_rule_id(reasons[0]) if reasons else None
     rule_version = decision_engine.rule_version
     yellow_explanation: YellowExplanationBundle | None = None
@@ -572,12 +680,13 @@ def post_decision(
     emit_audit_event(
         db=db,
         event="decision_finalized",
-        actor_type="service",
-        actor_id=payload.actor_id,
+        actor_type=("banker" if actor.actor_role == Role.banker else "service"),
+        actor_id=actor.actor_id,
         application_id=application_id,
         payload={
             "overall_score": overall_score,
             "traffic_light_status": zone,
+            "manual_action": payload.manual_action.value,
             "debt_to_income_ratio": resolved.debt_to_income_ratio,
             "debt_status": resolved.debt_status.value,
             "reasons": reasons[:3],
@@ -591,12 +700,15 @@ def post_decision(
     )
     db.commit()
     db.refresh(assessment)
+    metrics_registry.increment_decision_zone(zone)
+    cache_client.delete(f"risk_score:{application_id}")
     log_event(
         event="decision_finalized",
         application_id=str(application_id),
         payload={
             "overall_score": overall_score,
             "traffic_light_status": zone,
+            "manual_action": payload.manual_action.value,
             "upstream_dependency": "decision-engine",
         },
     )
@@ -611,6 +723,7 @@ def post_decision(
         yellow_explanation=yellow_explanation,
         decision_rule_version=rule_version,
         decision_rule_id=matched_rule_id,
+        manual_action=payload.manual_action,
     )
 
 
@@ -623,6 +736,7 @@ def post_social_default_event(
     request: Request,
     actor_id: str = Query(default="SOCIAL-TRUST-SERVICE", min_length=1),
     db: Session = Depends(get_db),
+    actor: ActorContext = Depends(service_or_ops_dependency),
 ) -> SocialDefaultPenaltyResponse:
     request.state.application_id = str(application_id)
     set_application_id(str(application_id))
@@ -636,10 +750,11 @@ def post_social_default_event(
         )
 
     penalty_service = SocialPenaltyService()
+    effective_actor_id = actor_id or actor.actor_id
     result = penalty_service.apply_default_event_penalty(
         db=db,
         application=application,
-        actor_id=actor_id,
+        actor_id=effective_actor_id,
     )
     db.commit()
 
@@ -649,4 +764,16 @@ def post_social_default_event(
         farmer_trust_before=result.farmer_trust_before,
         farmer_trust_after=result.farmer_trust_after,
         impacted_references=[item.model_dump() for item in result.impacted_references],
+    )
+
+
+@app.post("/api/v1/admin/purge")
+def post_retention_purge(
+    db: Session = Depends(get_db),
+    retention_days: int | None = Query(default=None, ge=1, le=3650),
+    _actor: ActorContext = Depends(ops_only_dependency),
+) -> dict[str, int | str]:
+    service = RetentionService(db)
+    return service.purge_older_than(
+        retention_days=retention_days or settings.data_retention_days
     )

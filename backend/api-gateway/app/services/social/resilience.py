@@ -11,6 +11,7 @@ class CircuitBreaker:
     failure_count: int = 0
     state: str = "closed"
     opened_at: datetime | None = None
+    last_error: str | None = None
 
     def allow_request(self) -> bool:
         now = datetime.now(timezone.utc)
@@ -27,10 +28,11 @@ class CircuitBreaker:
         self.failure_count = 0
         self.state = "closed"
         self.opened_at = None
+        self.last_error = None
 
-    def record_failure(self) -> None:
+    def record_failure(self, error_name: str = "unknown") -> None:
         self.failure_count += 1
+        self.last_error = error_name
         if self.failure_count >= self.failure_threshold:
             self.state = "open"
             self.opened_at = datetime.now(timezone.utc)
-
