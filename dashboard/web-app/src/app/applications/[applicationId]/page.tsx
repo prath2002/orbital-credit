@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { DecisionActionPanel } from "@/components/decision-action-panel";
-import { getRiskScore } from "@/lib/backend";
+import { getAgentRecommendation, getRiskScore } from "@/lib/backend";
 import { resolveActorHeadersFromCookies } from "@/lib/actor";
 
 type DetailPageProps = {
@@ -25,7 +25,10 @@ export default async function ApplicationDetailPage({ params }: DetailPageProps)
   const { applicationId } = await params;
   const cookieStore = await cookies();
   const actorHeaders = resolveActorHeadersFromCookies(cookieStore);
-  const riskResult = await getRiskScore(applicationId, actorHeaders);
+  const [riskResult, agentResult] = await Promise.all([
+    getRiskScore(applicationId, actorHeaders),
+    getAgentRecommendation(applicationId, actorHeaders),
+  ]);
 
   return (
     <main className="min-h-screen bg-background-dark p-6 text-slate-100">
@@ -105,6 +108,57 @@ export default async function ApplicationDetailPage({ params }: DetailPageProps)
               </div>
             </section>
 
+            <section className="rounded-xl border border-primary/40 bg-primary/10 p-4">
+              <h2 className="font-semibold text-white">AI Agent Recommendation</h2>
+              {agentResult.error || !agentResult.data ? (
+                <p className="mt-2 text-sm text-slate-200">Agent recommendation is unavailable: {agentResult.error ?? "Unknown error"}</p>
+              ) : (
+                <div className="mt-3 grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2 text-sm text-slate-100">
+                    <p>
+                      <span className="text-slate-300">Suggested action:</span>{" "}
+                      <span className="font-semibold uppercase">{agentResult.data.recommendation.action}</span>
+                    </p>
+                    <p>
+                      <span className="text-slate-300">Confidence:</span>{" "}
+                      <span className="font-semibold">{Math.round(agentResult.data.recommendation.confidence * 100)}%</span>
+                    </p>
+                    <p className="text-slate-200">{agentResult.data.recommendation.summary}</p>
+                    <p className="text-xs text-slate-300">Generated at: {new Date(agentResult.data.generated_at).toLocaleString("en-IN")}</p>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-100">Primary Reasons</h3>
+                      <ul className="mt-1 list-disc pl-5 text-sm text-slate-200">
+                        {agentResult.data.recommendation.primary_reasons.map((reason) => (
+                          <li key={reason}>{reason}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-100">Required Checks</h3>
+                      <ul className="mt-1 list-disc pl-5 text-sm text-slate-200">
+                        {agentResult.data.recommendation.required_checks.map((check) => (
+                          <li key={check}>{check}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="text-sm text-slate-200">
+                    <h3 className="text-sm font-semibold text-slate-100">Expected Impact if Approved</h3>
+                    <p>{agentResult.data.recommendation.expected_impact_if_approved}</p>
+                  </div>
+                  <div className="text-sm text-slate-200">
+                    <h3 className="text-sm font-semibold text-slate-100">Expected Impact if Rejected</h3>
+                    <p>{agentResult.data.recommendation.expected_impact_if_rejected}</p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <p className="text-xs text-slate-300">Graph path: {agentResult.data.graph_path.join(" -> ")}</p>
+                  </div>
+                </div>
+              )}
+            </section>
+
             <section className="rounded-xl border border-slate-700 bg-slate-900/70 p-4">
               <h2 className="font-semibold text-white">Data Quality & Flags</h2>
               <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-300">
@@ -163,7 +217,11 @@ export default async function ApplicationDetailPage({ params }: DetailPageProps)
               </section>
             ) : null}
 
-            <DecisionActionPanel applicationId={applicationId} risk={riskResult.data} />
+            <DecisionActionPanel
+              applicationId={applicationId}
+              risk={riskResult.data}
+              suggestedAction={agentResult.data?.recommendation.action}
+            />
           </>
         )}
       </div>

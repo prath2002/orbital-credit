@@ -184,3 +184,21 @@ class ErrorDetail(BaseModel):
 
 class ErrorResponse(BaseModel):
     error: ErrorDetail
+
+
+class AgentRecommendationItem(BaseModel):
+    action: ManualAction
+    confidence: float = Field(ge=0.0, le=1.0)
+    summary: str
+    primary_reasons: list[str] = Field(default_factory=list, max_length=3)
+    required_checks: list[str] = Field(default_factory=list)
+    expected_impact_if_approved: str
+    expected_impact_if_rejected: str
+
+
+class AgentRecommendationResponse(BaseModel):
+    application_id: UUID
+    generated_at: datetime
+    traffic_light_status: str | None = None
+    graph_path: list[str] = Field(default_factory=list)
+    recommendation: AgentRecommendationItem

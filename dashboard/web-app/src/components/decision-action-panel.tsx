@@ -7,6 +7,7 @@ import { RiskScoreResponse } from "@/lib/types";
 type DecisionActionPanelProps = {
   applicationId: string;
   risk: RiskScoreResponse;
+  suggestedAction?: "approve" | "reject" | "escalate";
 };
 
 type ActionType = "APPROVE" | "REJECT" | "ESCALATE";
@@ -15,10 +16,12 @@ function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
-export function DecisionActionPanel({ applicationId, risk }: DecisionActionPanelProps) {
+export function DecisionActionPanel({ applicationId, risk, suggestedAction }: DecisionActionPanelProps) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
-  const [actionType, setActionType] = useState<ActionType>("ESCALATE");
+  const initialAction: ActionType =
+    suggestedAction === "approve" ? "APPROVE" : suggestedAction === "reject" ? "REJECT" : "ESCALATE";
+  const [actionType, setActionType] = useState<ActionType>(initialAction);
   const [actorId, setActorId] = useState("banker_ui");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);

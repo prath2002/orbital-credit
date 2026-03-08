@@ -1,4 +1,5 @@
 import {
+  AgentRecommendationResponse,
   AnalyzeFarmRequestPayload,
   AnalyzeFarmResponse,
   BankerApplicationsResponse,
@@ -131,4 +132,14 @@ export async function getConnectivityCheck(
   return fetchJson<ConnectivityCheckResponse>(`/api/v1/satellite/connectivity-check?${params.toString()}`, {
     actorHeaders,
   });
+}
+
+export async function getAgentRecommendation(
+  applicationId: string,
+  actorHeaders?: ActorHeaders,
+): Promise<ApiResult<AgentRecommendationResponse>> {
+  return fetchJson<AgentRecommendationResponse>(
+    `/api/v1/agent-recommendation/${encodeURIComponent(applicationId)}`,
+    { actorHeaders },
+  );
 }

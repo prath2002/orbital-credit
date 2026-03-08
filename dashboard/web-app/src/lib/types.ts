@@ -119,3 +119,19 @@ export type ConnectivityCheckResponse = {
     latency_ms: number;
   }>;
 };
+
+export type AgentRecommendationResponse = {
+  application_id: string;
+  generated_at: string;
+  traffic_light_status: string | null;
+  graph_path: string[];
+  recommendation: {
+    action: "approve" | "reject" | "escalate";
+    confidence: number;
+    summary: string;
+    primary_reasons: string[];
+    required_checks: string[];
+    expected_impact_if_approved: string;
+    expected_impact_if_rejected: string;
+  };
+};
