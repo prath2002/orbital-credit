@@ -36,3 +36,20 @@ Thumbs.db
 documents/
 docs/
 stitch_exports/
+
+# Frontend (Next.js / Node)
+dashboard/web-app/node_modules/
+dashboard/web-app/.next/
+dashboard/web-app/out/
+dashboard/web-app/.turbo/
+dashboard/web-app/coverage/
+dashboard/web-app/*.tsbuildinfo
+dashboard/web-app/next-env.d.ts
+dashboard/web-app/.env.local
+dashboard/web-app/.env.development.local
+dashboard/web-app/.env.test.local
+dashboard/web-app/.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

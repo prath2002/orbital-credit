@@ -14,6 +14,7 @@ from rasterio.warp import transform
 
 from app.config import settings
 from app.core.logging import log_event
+from app.core.metrics import metrics_registry
 from app.services.satellite.exceptions import (
     SatelliteCircuitOpenError,
     SatelliteSceneNotFoundError,
@@ -76,6 +77,11 @@ class SatelliteTransport:
             except Exception as exc:  # pragma: no cover - resilience path
                 last_exc = exc
                 breaker.record_failure(type(exc).__name__)
+                metrics_registry.increment_external_api_failure(
+                    provider="planetary-computer",
+                    operation=operation,
+                    error_code=type(exc).__name__,
+                )
                 log_event(
                     level="ERROR",
                     event="satellite_operation_failed",

@@ -7,6 +7,7 @@ from typing import Callable, TypeVar
 
 from app.config import settings
 from app.core.logging import log_event
+from app.core.metrics import metrics_registry
 from app.services.social.adapter import SocialProviderAdapter
 from app.services.social.exceptions import (
     SocialCircuitOpenError,
@@ -138,7 +139,12 @@ class SocialTrustClient:
                 last_exc = SocialProviderUnavailableError(operation)
                 last_exc.__cause__ = exc
 
-            breaker.record_failure()
+            breaker.record_failure(last_exc.code if last_exc else "UNKNOWN")
+            metrics_registry.increment_external_api_failure(
+                provider="social-provider",
+                operation=operation,
+                error_code=(last_exc.code if last_exc else "UNKNOWN"),
+            )
             log_event(
                 level="ERROR",
                 event="social_operation_failed",

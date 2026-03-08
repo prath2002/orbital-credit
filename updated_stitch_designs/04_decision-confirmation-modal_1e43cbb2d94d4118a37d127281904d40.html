@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Orbital-Credit - Confirm Decision</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased overflow-hidden">
+<!-- Background Content (Simulated Dashboard) -->
+<div aria-hidden="true" class="relative flex h-screen w-full flex-col overflow-hidden opacity-20 pointer-events-none select-none">
+<header class="flex items-center justify-between px-8 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1c242d]">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded bg-primary"></div>
+<span class="text-xl font-bold">Orbital-Credit</span>
+</div>
+</header>
+<div class="flex flex-1">
+<aside class="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#151d25] p-4 flex flex-col gap-2">
+<div class="h-10 w-full bg-slate-100 dark:bg-slate-800 rounded"></div>
+<div class="h-10 w-full bg-slate-100 dark:bg-slate-800 rounded"></div>
+<div class="h-10 w-full bg-slate-100 dark:bg-slate-800 rounded"></div>
+</aside>
+<main class="flex-1 p-8">
+<div class="h-32 w-full bg-slate-200 dark:bg-slate-800 rounded-xl mb-6"></div>
+<div class="grid grid-cols-2 gap-6">
+<div class="h-64 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+<div class="h-64 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+</div>
+</main>
+</div>
+</div>
+<!-- Modal Overlay -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+<!-- Modal Card -->
+<div class="relative w-full max-w-[600px] flex flex-col overflow-hidden rounded-xl bg-white dark:bg-[#1c242d] shadow-[0_8px_30px_rgb(0,0,0,0.5)] border border-slate-200 dark:border-slate-700">
+<!-- Modal Header -->
+<div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+<span class="material-symbols-outlined text-2xl">check_circle</span>
+</div>
+<h2 class="text-xl font-bold leading-tight text-slate-900 dark:text-white">Confirm Decision</h2>
+</div>
+<button class="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-xl">close</span>
+</button>
+</div>
+<!-- Modal Content -->
+<div class="flex flex-col gap-6 px-6 py-6">
+<!-- Impact Summary Alert -->
+<div class="flex gap-3 rounded-lg bg-blue-50 dark:bg-[#152332] border border-blue-100 dark:border-blue-900/50 p-4">
+<span class="material-symbols-outlined text-primary mt-0.5 shrink-0">info</span>
+<div class="flex flex-col gap-1">
+<p class="text-sm font-semibold text-slate-900 dark:text-white">Portfolio Impact Analysis</p>
+<p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                            By approving this loan, the total exposure for the 'Midwest Grains' portfolio will increase by <strong class="text-slate-900 dark:text-white">$1.2M</strong>, bringing utilization to <strong class="text-slate-900 dark:text-white">85%</strong> of the sector limit.
+                        </p>
+</div>
+</div>
+<!-- Textarea Section -->
+<label class="flex flex-col gap-2">
+<span class="text-sm font-semibold text-slate-900 dark:text-white flex items-center justify-between">
+                        Banker Notes
+                        <span class="text-xs font-normal text-slate-500 dark:text-slate-400">Required for Policy 4.2a</span>
+</span>
+<textarea class="form-textarea w-full min-h-[140px] resize-none rounded-lg border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-600 dark:bg-[#151d25] dark:text-white dark:placeholder:text-slate-500 focus:outline-none transition-all" placeholder="Enter justification for approval, citing specific risk mitigants..."></textarea>
+</label>
+<!-- Additional Metadata (Optional) -->
+<div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-[16px]">security</span>
+<span>Decision logged by: J. Smith (Senior Risk Officer)</span>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="bg-slate-50 dark:bg-[#151d25] px-6 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-slate-200 dark:border-slate-700">
+<p class="text-xs text-slate-400 font-mono hidden sm:block">CID: f47ac10b...2c3d479</p>
+<div class="flex items-center justify-end gap-3 w-full sm:w-auto">
+<button class="flex-1 sm:flex-none cursor-pointer rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        Cancel
+                    </button>
+<!-- Primary Action Button (Green for Approve) -->
+<button class="flex-1 sm:flex-none cursor-pointer rounded-lg bg-green-600 px-6 py-2 text-sm font-bold text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-[#1c242d] transition-colors shadow-lg shadow-green-900/20">
+                        Approve Loan
+                    </button>
+<!-- Alternative Reject Button (Commented out but structured for easy swap) -->
+<!-- 
+                    <button class="flex-1 sm:flex-none cursor-pointer rounded-lg bg-red-600 px-6 py-2 text-sm font-bold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-[#1c242d] transition-colors shadow-lg shadow-red-900/20">
+                        Reject Loan
+                    </button> 
+                    -->
+</div>
+<p class="text-xs text-slate-400 font-mono text-center sm:hidden">CID: f47ac10b...2c3d479</p>
+</div>
+<!-- Progress bar / Decoration at top -->
+<div class="absolute top-0 left-0 h-1 w-full bg-slate-100 dark:bg-slate-800">
+<div class="h-full w-full bg-primary/50"></div>
+</div>
+</div>
+</div>
+</body></html>

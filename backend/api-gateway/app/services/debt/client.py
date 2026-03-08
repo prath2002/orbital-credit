@@ -7,6 +7,7 @@ from typing import Callable, TypeVar
 
 from app.config import settings
 from app.core.logging import log_event
+from app.core.metrics import metrics_registry
 from app.services.debt.adapter import DebtProviderAdapter
 from app.services.debt.exceptions import (
     DebtCircuitOpenError,
@@ -160,7 +161,12 @@ class DebtServiceClient:
                 last_exc = DebtProviderUnavailableError(operation)
                 last_exc.__cause__ = exc
 
-            breaker.record_failure()
+            breaker.record_failure(last_exc.code if last_exc else "UNKNOWN")
+            metrics_registry.increment_external_api_failure(
+                provider="debt-provider",
+                operation=operation,
+                error_code=(last_exc.code if last_exc else "UNKNOWN"),
+            )
             log_event(
                 level="ERROR",
                 event="debt_operation_failed",

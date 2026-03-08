@@ -91,6 +91,7 @@ class RiskScoreResponse(BaseModel):
     overall_score: int | None = None
     traffic_light_status: str | None = None
     rationale: str | None = None
+    yellow_explanation: "YellowExplanationBundle | None" = None
     metadata: RiskScoreMetadata
 
 
@@ -117,7 +118,14 @@ class DebtStatus(str, Enum):
     unverified = "unverified"
 
 
+class ManualAction(str, Enum):
+    approve = "approve"
+    reject = "reject"
+    escalate = "escalate"
+
+
 class DecisionRequest(BaseModel):
+    manual_action: ManualAction = ManualAction.escalate
     satellite_score: int = Field(ge=0, le=100)
     debt_score: int | None = Field(default=None, ge=0, le=100)
     social_score: int | None = Field(default=None, ge=0, le=100)
@@ -142,6 +150,7 @@ class DecisionResponse(BaseModel):
     yellow_explanation: "YellowExplanationBundle | None" = None
     decision_rule_version: str | None = None
     decision_rule_id: str | None = None
+    manual_action: ManualAction | None = None
 
 
 class YellowExplanationBundle(BaseModel):

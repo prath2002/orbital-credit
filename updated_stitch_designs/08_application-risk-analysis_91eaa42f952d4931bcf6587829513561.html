@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Application Queue Management - Orbital-Credit</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "sidebar-light": "#ffffff",
+                        "sidebar-dark": "#0b1219",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display antialiased min-h-screen flex overflow-hidden">
+<aside class="w-64 bg-sidebar-light dark:bg-sidebar-dark border-r border-slate-200 dark:border-slate-800 flex flex-col fixed inset-y-0 z-50">
+<div class="h-16 flex items-center px-6 border-b border-slate-100 dark:border-slate-800/50">
+<div class="flex items-center gap-3 text-slate-900 dark:text-white">
+<div class="size-8 text-primary">
+<svg fill="currentColor" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 4H17.3334V17.3334H30.6666V30.6666H44V44H4V4Z"></path>
+</svg>
+</div>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">Orbital-Credit</h2>
+</div>
+</div>
+<nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-medium transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px] fill-1">assignment</span>
+<span class="text-sm">Applications</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">dns</span>
+<span class="text-sm font-medium">System Status</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-3 px-3 py-2">
+<div class="size-8 rounded-full bg-slate-200 dark:bg-slate-700 bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAFAAsh5GSjpQhfycrL75_liATOuavbEZpyVeOMWToJY_F_eYtUqnBTl3RIxEimmUgGW6G_lyyaOIFGWTxVHERAo8C5TjF92S_W1JyhI7h8qUFJeJcpYt20uiln3vofKYZ0ICulUfHTySwt-5uRstCOHsr0fI8uvQRQkPosvvB3Tzb5mOCopsdmYRe_8NZ1HLjHp_S--1YWGQg0tWvEXHSWSs3hSqBW9aIg7hReYc452ZFE0Z_o4dVM2ZWNd_SZ9aSz2jC9VxR_tfQ");'></div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold text-slate-900 dark:text-white truncate">Elena R.</p>
+<p class="text-xs text-slate-500 truncate">Senior Risk Analyst</p>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 ml-64 flex flex-col h-screen overflow-hidden relative">
+<header class="h-16 flex items-center justify-between px-8 border-b border-slate-200 dark:border-slate-800 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur z-40 sticky top-0">
+<h1 class="text-xl font-bold text-slate-900 dark:text-white">Application Queue</h1>
+<div class="flex items-center gap-4">
+<button class="flex items-center justify-center size-9 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 transition-colors relative">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-background-light dark:border-background-dark"></span>
+</button>
+<button class="flex items-center justify-center size-9 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 transition-colors">
+<span class="material-symbols-outlined text-[20px]">help</span>
+</button>
+</div>
+</header>
+<div class="flex-1 overflow-auto p-8">
+<div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
+<div class="flex flex-col sm:flex-row gap-3 flex-1">
+<div class="relative max-w-md w-full">
+<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</div>
+<input class="block w-full rounded-lg border-0 bg-white dark:bg-slate-900 py-2.5 pl-10 pr-3 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 ring-1 ring-inset ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6 shadow-sm" placeholder="Search by ID, Name or Location..." type="search"/>
+</div>
+<div class="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
+<div class="relative group">
+<button class="flex items-center gap-2 px-3 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 transition-colors shadow-sm whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px] text-slate-400">filter_list</span>
+                                Zone
+                                <span class="bg-slate-100 dark:bg-slate-800 text-xs px-1.5 py-0.5 rounded ml-1">All</span>
+<span class="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
+</button>
+</div>
+<div class="relative group">
+<button class="flex items-center gap-2 px-3 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 transition-colors shadow-sm whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px] text-slate-400">public</span>
+                                Region
+                                <span class="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
+</button>
+</div>
+<div class="relative group">
+<button class="flex items-center gap-2 px-3 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 transition-colors shadow-sm whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px] text-slate-400">sort</span>
+                                Sort: Created Time
+                                <span class="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
+</button>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-sm text-slate-500 hidden sm:block">Showing <strong>1-10</strong> of <strong>248</strong> applications</span>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-blue-600 text-white rounded-lg text-sm font-bold shadow-lg shadow-blue-900/20 transition-all whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                        Manual Entry
+                    </button>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="min-w-full text-left">
+<thead class="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
+<tr>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-16" scope="col">
+<div class="flex items-center gap-2 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200">
+                                        App ID
+                                    </div>
+</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider" scope="col">
+                                    Farmer Name
+                                </th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider" scope="col">
+                                    Location
+                                </th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right" scope="col">
+                                    Loan Amount
+                                </th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center" scope="col">
+                                    Zone
+                                </th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider" scope="col">
+                                    Status
+                                </th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider" scope="col">
+                                    Priority
+                                </th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-10" scope="col"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer">
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-sm font-medium text-primary hover:underline">#4928</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300">GV</div>
+<div>
+<div class="text-sm font-bold text-slate-900 dark:text-white">Green Valley Organics</div>
+<div class="text-xs text-slate-500">Soybeans</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-300">
+                                    Midwest, USA
+                                </td>
+<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-white text-right">
+                                    $450,000
+                                </td>
+<td class="px-6 py-4 whitespace-nowrap text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20">
+<span class="size-1.5 rounded-full bg-yellow-500"></span>
+                                        Warning
+                                    </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-sm text-slate-600 dark:text-slate-300">Reviewing</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 text-xs font-bold text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400 px-2 py-1 rounded uppercase tracking-wide">
+                                        High
+                                    </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer">
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-sm font-medium text-primary hover:underline">#4922</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-300">SF</div>
+<div>
+<div class="text-sm font-bold text-slate-900 dark:text-white">Sunny Fields LLC</div>
+<div class="text-xs text-slate-500">Wheat</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-300">
+                                    Dakota, USA
+                                </td>
+<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-white text-right">
+                                    $120,000
+                                </td>
+<td class="px-6 py-4 whitespace-nowrap text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+<span class="size-1.5 rounded-full bg-emerald-500"></span>
+                                        Low Risk
+                                    </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-sm text-slate-600 dark:text-slate-300">Pre-Approved</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 text-xs font-bold text-slate-600 bg-slate-100 dark:bg-slate-800 dark:text-slate-400 px-2 py-1 rounded uppercase tracking-wide">
+                                        Normal
+                                    </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer">
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-sm font-medium text-primary hover:underline">#4915</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-xs font-bold text-orange-600 dark:text-orange-300">OA</div>
+<div>
+<div class="text-sm font-bold text-slate-900 dark:text-white">Orchard Acres</div>
+<div class="text-xs text-slate-500">Apples</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-300">
+                                    Washington, USA
+                                </td>
+<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-white text-right">
+                                    $850,000
+                                </td>
+<td class="px-6 py-4 whitespace-nowrap text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
+<span class="size-1.5 rounded-full bg-red-500"></span>
+                                        Critical
+                                    </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-sm text-slate-600 dark:text-slate-300">Pending Docs</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 text-xs font-bold text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400 px-2 py-1 rounded uppercase tracking-wide">
+                                        Urgent
+                                    </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer">
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-sm font-medium text-primary hover:underline">#4892</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-xs font-bold text-teal-600 dark:text-teal-300">BR</div>
+<div>
+<div class="text-sm font-bold text-slate-900 dark:text-white">Blue River Co-op</div>
+<div class="text-xs text-slate-500">Corn</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-300">
+                                    Nebraska, USA
+                                </td>
+<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-white text-right">
+                                    $215,000
+                                </td>
+<td class="px-6 py-4 whitespace-nowrap text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+<span class="size-1.5 rounded-full bg-emerald-500"></span>
+                                        Low Risk
+                                    </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="text-sm text-slate-600 dark:text-slate-300">New</span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 text-xs font-bold text-slate-600 bg-slate-100 dark:bg-slate-800 dark:text-slate-400 px-2 py-1 rounded uppercase tracking-wide">
+                                        Normal
+                                    </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="animate-pulse">
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-12"></div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-slate-200 dark:bg-slate-800"></div>
+<div class="space-y-1.5">
+<div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-32"></div>
+<div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-20"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-24"></div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-20 ml-auto"></div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-center flex justify-center">
+<div class="h-6 bg-slate-200 dark:bg-slate-800 rounded-full w-20"></div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-16"></div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="h-6 bg-slate-200 dark:bg-slate-800 rounded w-16"></div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="size-6 bg-slate-200 dark:bg-slate-800 rounded-full ml-auto"></div>
+</td>
+</tr>
+<tr class="animate-pulse">
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-12"></div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-slate-200 dark:bg-slate-800"></div>
+<div class="space-y-1.5">
+<div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-24"></div>
+<div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-16"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-28"></div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-20 ml-auto"></div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-center flex justify-center">
+<div class="h-6 bg-slate-200 dark:bg-slate-800 rounded-full w-20"></div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-20"></div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="h-6 bg-slate-200 dark:bg-slate-800 rounded w-16"></div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="size-6 bg-slate-200 dark:bg-slate-800 rounded-full ml-auto"></div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled="">
+<span class="material-symbols-outlined text-[16px]">chevron_left</span>
+                        Previous
+                    </button>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-white text-sm font-bold shadow-sm">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-medium transition-colors">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-medium transition-colors">3</button>
+<span class="w-8 h-8 flex items-center justify-center text-slate-400">...</span>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-medium transition-colors">24</button>
+</div>
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                        Next
+                        <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>

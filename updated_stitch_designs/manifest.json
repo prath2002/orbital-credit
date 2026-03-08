@@ -1,0 +1,114 @@
+﻿[
+    {
+        "index":  "01",
+        "title":  "Orbital-Credit Banker Login",
+        "screen_id":  "2e76995e46664a539986d7406a5bc3cd",
+        "html_file":  "updated_stitch_designs\\01_orbital-credit-banker-login_2e76995e46664a539986d7406a5bc3cd.html",
+        "png_file":  "updated_stitch_designs\\01_orbital-credit-banker-login_2e76995e46664a539986d7406a5bc3cd.png"
+    },
+    {
+        "index":  "02",
+        "title":  "Loan Application Queue",
+        "screen_id":  "8f904179eb724e248defb016d8e26984",
+        "html_file":  "updated_stitch_designs\\02_loan-application-queue_8f904179eb724e248defb016d8e26984.html",
+        "png_file":  "updated_stitch_designs\\02_loan-application-queue_8f904179eb724e248defb016d8e26984.png"
+    },
+    {
+        "index":  "03",
+        "title":  "Application Risk Analysis",
+        "screen_id":  "98a6d77ab2af4db5be06801bd1c06aae",
+        "html_file":  "updated_stitch_designs\\03_application-risk-analysis_98a6d77ab2af4db5be06801bd1c06aae.html",
+        "png_file":  "updated_stitch_designs\\03_application-risk-analysis_98a6d77ab2af4db5be06801bd1c06aae.png"
+    },
+    {
+        "index":  "04",
+        "title":  "Decision Confirmation Modal",
+        "screen_id":  "1e43cbb2d94d4118a37d127281904d40",
+        "html_file":  "updated_stitch_designs\\04_decision-confirmation-modal_1e43cbb2d94d4118a37d127281904d40.html",
+        "png_file":  "updated_stitch_designs\\04_decision-confirmation-modal_1e43cbb2d94d4118a37d127281904d40.png"
+    },
+    {
+        "index":  "05",
+        "title":  "Application Risk Analysis",
+        "screen_id":  "378db884fbb346bfafe324eb4b448e09",
+        "html_file":  "updated_stitch_designs\\05_application-risk-analysis_378db884fbb346bfafe324eb4b448e09.html",
+        "png_file":  "updated_stitch_designs\\05_application-risk-analysis_378db884fbb346bfafe324eb4b448e09.png"
+    },
+    {
+        "index":  "06",
+        "title":  "System Status Monitoring Dashboard",
+        "screen_id":  "e3970ec6ab7a463d9d8e7ae4af4a7623",
+        "html_file":  "updated_stitch_designs\\06_system-status-monitoring-dashboard_e3970ec6ab7a463d9d8e7ae4af4a7623.html",
+        "png_file":  "updated_stitch_designs\\06_system-status-monitoring-dashboard_e3970ec6ab7a463d9d8e7ae4af4a7623.png"
+    },
+    {
+        "index":  "07",
+        "title":  "Application Risk Analysis",
+        "screen_id":  "8fb8dbc3a44544ba8c2d0ff44ed0bd5c",
+        "html_file":  "updated_stitch_designs\\07_application-risk-analysis_8fb8dbc3a44544ba8c2d0ff44ed0bd5c.html",
+        "png_file":  "updated_stitch_designs\\07_application-risk-analysis_8fb8dbc3a44544ba8c2d0ff44ed0bd5c.png"
+    },
+    {
+        "index":  "08",
+        "title":  "Application Risk Analysis",
+        "screen_id":  "91eaa42f952d4931bcf6587829513561",
+        "html_file":  "updated_stitch_designs\\08_application-risk-analysis_91eaa42f952d4931bcf6587829513561.html",
+        "png_file":  "updated_stitch_designs\\08_application-risk-analysis_91eaa42f952d4931bcf6587829513561.png"
+    },
+    {
+        "index":  "09",
+        "title":  "Application Risk Analysis",
+        "screen_id":  "ea8c4c442ad64be28b6f56b5e67a6752",
+        "html_file":  "updated_stitch_designs\\09_application-risk-analysis_ea8c4c442ad64be28b6f56b5e67a6752.html",
+        "png_file":  "updated_stitch_designs\\09_application-risk-analysis_ea8c4c442ad64be28b6f56b5e67a6752.png"
+    },
+    {
+        "index":  "10",
+        "title":  "Application Risk Analysis",
+        "screen_id":  "67d0d9e561c243139a258b6ffddd3d3a",
+        "html_file":  "updated_stitch_designs\\10_application-risk-analysis_67d0d9e561c243139a258b6ffddd3d3a.html",
+        "png_file":  "updated_stitch_designs\\10_application-risk-analysis_67d0d9e561c243139a258b6ffddd3d3a.png"
+    },
+    {
+        "index":  "11",
+        "title":  "Application Risk Analysis",
+        "screen_id":  "1b991d6d8f0c4b3cacac9dda5366cf63",
+        "html_file":  "updated_stitch_designs\\11_application-risk-analysis_1b991d6d8f0c4b3cacac9dda5366cf63.html",
+        "png_file":  "updated_stitch_designs\\11_application-risk-analysis_1b991d6d8f0c4b3cacac9dda5366cf63.png"
+    },
+    {
+        "index":  "12",
+        "title":  "Application Risk Analysis",
+        "screen_id":  "999507451c934b72a855c4d11ccf820d",
+        "html_file":  "updated_stitch_designs\\12_application-risk-analysis_999507451c934b72a855c4d11ccf820d.html",
+        "png_file":  "updated_stitch_designs\\12_application-risk-analysis_999507451c934b72a855c4d11ccf820d.png"
+    },
+    {
+        "index":  "13",
+        "title":  "Application Risk Analysis",
+        "screen_id":  "a546d47649f347f3927307d122c877f1",
+        "html_file":  "updated_stitch_designs\\13_application-risk-analysis_a546d47649f347f3927307d122c877f1.html",
+        "png_file":  "updated_stitch_designs\\13_application-risk-analysis_a546d47649f347f3927307d122c877f1.png"
+    },
+    {
+        "index":  "14",
+        "title":  "Application Risk Analysis",
+        "screen_id":  "1923a6d638ba474d89bbfad498e7cb03",
+        "html_file":  "updated_stitch_designs\\14_application-risk-analysis_1923a6d638ba474d89bbfad498e7cb03.html",
+        "png_file":  "updated_stitch_designs\\14_application-risk-analysis_1923a6d638ba474d89bbfad498e7cb03.png"
+    },
+    {
+        "index":  "15",
+        "title":  "Application Risk Analysis",
+        "screen_id":  "b71bf1a3efad48dea773bcda3b72d34d",
+        "html_file":  "updated_stitch_designs\\15_application-risk-analysis_b71bf1a3efad48dea773bcda3b72d34d.html",
+        "png_file":  "updated_stitch_designs\\15_application-risk-analysis_b71bf1a3efad48dea773bcda3b72d34d.png"
+    },
+    {
+        "index":  "16",
+        "title":  "Application Risk Analysis",
+        "screen_id":  "c890714d937c47a58dbeeabf945aadc2",
+        "html_file":  "updated_stitch_designs\\16_application-risk-analysis_c890714d937c47a58dbeeabf945aadc2.html",
+        "png_file":  "updated_stitch_designs\\16_application-risk-analysis_c890714d937c47a58dbeeabf945aadc2.png"
+    }
+]
