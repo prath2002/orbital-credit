@@ -1,5 +1,22 @@
 export type TrafficLightStatus = "GREEN" | "YELLOW" | "RED" | string;
 
+export type AnalyzeFarmRequestPayload = {
+  gps_coordinates: {
+    latitude: number;
+    longitude: number;
+  };
+  farmer_mobile: string;
+  loan_amount: number;
+  references: [string, string];
+  banker_id: string;
+};
+
+export type AnalyzeFarmResponse = {
+  application_id: string;
+  status: "processing" | "completed";
+  message: string;
+};
+
 export type BankerApplicationItem = {
   application_id: string;
   farmer_mobile: string;
@@ -85,4 +102,20 @@ export type DecisionResponse = {
   decision_rule_version: string | null;
   decision_rule_id: string | null;
   manual_action?: "approve" | "reject" | "escalate" | null;
+};
+
+export type ConnectivityCheckResponse = {
+  scene: {
+    scene_id: string;
+    acquired_at: string;
+    cloud_cover: number | null;
+    bands: Record<string, string>;
+  };
+  stac_search_latency_ms: number;
+  sas_sign_latency_ms: number;
+  download_probes: Array<{
+    band: string;
+    bytes_downloaded: number;
+    latency_ms: number;
+  }>;
 };

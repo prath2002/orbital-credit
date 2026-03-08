@@ -89,7 +89,9 @@ export function DecisionActionPanel({ applicationId, risk }: DecisionActionPanel
       }
       setSuccess(`Decision submitted: ${body.traffic_light_status}`);
       setModalOpen(false);
-      router.refresh();
+      const zone = encodeURIComponent(body.traffic_light_status ?? "YELLOW");
+      const action = encodeURIComponent(actionType.toLowerCase());
+      router.push(`/applications/${applicationId}/decision-recorded?zone=${zone}&action=${action}`);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Decision request failed");
     } finally {

@@ -35,9 +35,14 @@ export default async function ApplicationDetailPage({ params }: DetailPageProps)
             <h1 className="text-3xl font-bold">Application Risk Analysis</h1>
             <p className="mt-2 font-mono text-xs text-slate-300">Application ID: {applicationId}</p>
           </div>
-          <Link className="rounded-lg border border-slate-600 px-4 py-2 text-slate-200" href="/applications">
-            Back to Queue
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link className="rounded-lg border border-slate-600 px-4 py-2 text-slate-200" href="/applications">
+              Back to Queue
+            </Link>
+            <Link className="rounded-lg border border-slate-600 px-4 py-2 text-slate-200" href="/system-status">
+              System Status
+            </Link>
+          </div>
         </div>
 
         {riskResult.error || !riskResult.data ? (
@@ -46,6 +51,21 @@ export default async function ApplicationDetailPage({ params }: DetailPageProps)
           </div>
         ) : (
           <>
+            <section
+              className={`rounded-xl border p-4 ${
+                riskResult.data.traffic_light_status === "GREEN"
+                  ? "border-emerald-500/30 bg-emerald-500/10"
+                  : riskResult.data.traffic_light_status === "RED"
+                    ? "border-rose-500/30 bg-rose-500/10"
+                    : "border-amber-500/30 bg-amber-500/10"
+              }`}
+            >
+              <p className="text-sm text-slate-100">
+                Decision zone for this snapshot:{" "}
+                <span className="font-semibold">{riskResult.data.traffic_light_status ?? "YELLOW"}</span>
+              </p>
+            </section>
+
             <section className="grid gap-4 md:grid-cols-4">
               <div className="rounded-xl border border-slate-700 bg-slate-900/70 p-4">
                 <p className="text-sm text-slate-400">Overall Score</p>

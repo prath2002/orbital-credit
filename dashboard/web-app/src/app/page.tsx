@@ -10,6 +10,9 @@ export default function Home() {
           Next.js app scaffolded with route shells mapped from Stitch exports.
         </p>
         <div className="mt-8 grid gap-3 sm:grid-cols-2">
+          <Link className="rounded-lg bg-primary px-4 py-3 font-semibold text-white hover:opacity-90" href="/applications/new">
+            New Application
+          </Link>
           <Link className="rounded-lg bg-primary px-4 py-3 font-semibold text-white hover:opacity-90" href="/login">
             Banker Login
           </Link>

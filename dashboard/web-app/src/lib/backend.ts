@@ -1,5 +1,8 @@
 import {
+  AnalyzeFarmRequestPayload,
+  AnalyzeFarmResponse,
   BankerApplicationsResponse,
+  ConnectivityCheckResponse,
   DecisionRequestPayload,
   DecisionResponse,
   RiskScoreResponse,
@@ -95,4 +98,37 @@ export async function getMetrics(actorHeaders?: ActorHeaders): Promise<ApiResult
   } catch (error) {
     return { data: null, error: error instanceof Error ? error.message : "Network error" };
   }
+}
+
+export async function analyzeFarm(
+  payload: AnalyzeFarmRequestPayload,
+  actorHeaders?: ActorHeaders,
+  idempotencyKey?: string,
+): Promise<ApiResult<AnalyzeFarmResponse>> {
+  const headers = new Headers();
+  if (idempotencyKey) {
+    headers.set("Idempotency-Key", idempotencyKey);
+  }
+  return fetchJson<AnalyzeFarmResponse>("/api/v1/analyze-farm", {
+    actorHeaders,
+    init: {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    },
+  });
+}
+
+export async function getConnectivityCheck(
+  latitude: number,
+  longitude: number,
+  actorHeaders?: ActorHeaders,
+): Promise<ApiResult<ConnectivityCheckResponse>> {
+  const params = new URLSearchParams({
+    latitude: String(latitude),
+    longitude: String(longitude),
+  });
+  return fetchJson<ConnectivityCheckResponse>(`/api/v1/satellite/connectivity-check?${params.toString()}`, {
+    actorHeaders,
+  });
 }
