@@ -22,6 +22,7 @@ from app.core.request_context import set_application_id
 from app.db import get_db
 from app.models import FarmerReference, LoanApplication, RiskAssessment
 from app.services.assessment_orchestrator import AssessmentOrchestrator
+from app.services.agent import AgentRecommendationService
 from app.services.decision_engine import DecisionEngine
 from app.services.retention import RetentionService
 from app.services.social.penalty import SocialPenaltyService
@@ -31,6 +32,7 @@ from app.services.satellite.models import ConnectivityCheckResult, SatelliteFeat
 from app.schemas import (
     AnalyzeFarmRequest,
     AnalyzeFarmResponse,
+    AgentRecommendationResponse,
     ApplicationStatus,
     BankerApplicationItem,
     BankerApplicationsResponse,
@@ -50,6 +52,7 @@ from app.schemas import (
 app = FastAPI(title="Orbital Credit API Gateway", version="0.1.0")
 app.add_middleware(CorrelationIdMiddleware)
 decision_engine = DecisionEngine()
+agent_recommendation_service = AgentRecommendationService(decision_engine=decision_engine)
 
 banker_or_ops_dependency = require_roles([Role.banker, Role.ops_admin])
 service_or_ops_dependency = require_roles([Role.system_service, Role.ops_admin])
@@ -725,6 +728,57 @@ def post_decision(
         decision_rule_id=matched_rule_id,
         manual_action=payload.manual_action,
     )
+
+
+@app.get(
+    "/api/v1/agent-recommendation/{application_id}",
+    response_model=AgentRecommendationResponse,
+)
+def get_agent_recommendation(
+    application_id: UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: ActorContext = Depends(banker_or_ops_dependency),
+) -> AgentRecommendationResponse:
+    request.state.application_id = str(application_id)
+    set_application_id(str(application_id))
+    application = db.get(LoanApplication, application_id)
+    if application is None:
+        raise ValidationError(
+            code="APPLICATION_NOT_FOUND",
+            message="Application not found",
+            status_code=404,
+            retryable=False,
+        )
+
+    assessment = db.execute(
+        select(RiskAssessment)
+        .where(RiskAssessment.application_id == application_id)
+        .order_by(RiskAssessment.created_at.desc())
+        .limit(1)
+    ).scalar_one_or_none()
+
+    response = agent_recommendation_service.run(
+        application=application,
+        assessment=assessment,
+    )
+
+    emit_audit_event(
+        db=db,
+        event="agent_recommendation_generated",
+        actor_type=("banker" if actor.actor_role == Role.banker else "service"),
+        actor_id=actor.actor_id,
+        application_id=application_id,
+        payload={
+            "recommended_action": response.recommendation.action.value,
+            "confidence": response.recommendation.confidence,
+            "traffic_light_status": response.traffic_light_status,
+            "graph_path": response.graph_path,
+            "upstream_dependency": "agent-orchestrator",
+        },
+    )
+    db.commit()
+    return response
 
 
 @app.post(
