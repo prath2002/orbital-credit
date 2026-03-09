@@ -180,6 +180,7 @@ class ErrorDetail(BaseModel):
     message: str
     correlation_id: str | None = None
     retryable: bool
+    details: list[dict[str, str]] = Field(default_factory=list)
 
 
 class ErrorResponse(BaseModel):

@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
+from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy import select
@@ -19,7 +19,7 @@ from app.core.logging import configure_logging, log_event
 from app.core.metrics import Timer, metrics_registry
 from app.core.rbac import ActorContext, Role, require_roles
 from app.core.request_context import set_application_id
-from app.db import get_db
+from app.db import SessionLocal, get_db
 from app.models import FarmerReference, LoanApplication, RiskAssessment
 from app.services.assessment_orchestrator import AssessmentOrchestrator
 from app.services.agent import AgentRecommendationService
@@ -65,20 +65,83 @@ def on_startup() -> None:
     configure_logging()
 
 
+def _run_assessments_in_background(application_id: UUID) -> None:
+    db = SessionLocal()
+    try:
+        application = db.get(LoanApplication, application_id)
+        if application is None:
+            log_event(
+                level="ERROR",
+                event="assessment_background_application_missing",
+                application_id=str(application_id),
+            )
+            return
+        assessment = db.execute(
+            select(RiskAssessment)
+            .where(RiskAssessment.application_id == application_id)
+            .order_by(RiskAssessment.created_at.desc())
+            .limit(1)
+        ).scalar_one_or_none()
+        if assessment is None:
+            log_event(
+                level="ERROR",
+                event="assessment_background_snapshot_missing",
+                application_id=str(application_id),
+            )
+            return
+
+        orchestrator = AssessmentOrchestrator()
+        orchestrator.run_satellite_assessment(
+            db=db,
+            application=application,
+            assessment=assessment,
+        )
+        orchestrator.run_debt_assessment(
+            db=db,
+            application=application,
+            assessment=assessment,
+        )
+        orchestrator.run_social_assessment(
+            db=db,
+            application=application,
+            assessment=assessment,
+        )
+        db.commit()
+        log_event(
+            event="analysis_assessments_completed",
+            application_id=str(application_id),
+            payload={"status": "processing"},
+        )
+    except Exception as exc:  # pragma: no cover - defensive background path
+        db.rollback()
+        log_event(
+            level="ERROR",
+            event="analysis_assessments_background_failed",
+            application_id=str(application_id),
+            payload={"error_type": type(exc).__name__},
+        )
+    finally:
+        db.close()
+
+
 def _error_payload(
     request: Request,
     *,
     code: str,
     message: str,
     retryable: bool,
-) -> dict[str, dict[str, str | bool | None]]:
+    details: list[dict[str, str]] | None = None,
+) -> dict[str, dict[str, str | bool | None | list[dict[str, str]]]]:
+    error_payload: dict[str, str | bool | None | list[dict[str, str]]] = {
+        "code": code,
+        "message": message,
+        "correlation_id": getattr(request.state, "correlation_id", None),
+        "retryable": retryable,
+    }
+    if details:
+        error_payload["details"] = details
     return {
-        "error": {
-            "code": code,
-            "message": message,
-            "correlation_id": getattr(request.state, "correlation_id", None),
-            "retryable": retryable,
-        }
+        "error": error_payload
     }
 
 
@@ -121,6 +184,11 @@ async def handle_request_validation_error(
         event="request_validation_error",
         payload={"errors": exc.errors(), "path": request.url.path},
     )
+    details: list[dict[str, str]] = []
+    for item in exc.errors():
+        loc = " -> ".join(str(part) for part in item.get("loc", []))
+        msg = str(item.get("msg", "Invalid value"))
+        details.append({"field": loc, "message": msg})
     return JSONResponse(
         status_code=err.status_code,
         content=_error_payload(
@@ -128,6 +196,7 @@ async def handle_request_validation_error(
             code=err.code,
             message=err.message,
             retryable=err.retryable,
+            details=details,
         ),
     )
 
@@ -254,6 +323,7 @@ def satellite_features(
 def analyze_farm(
     payload: AnalyzeFarmRequest,
     request: Request,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     actor: ActorContext = Depends(all_actor_roles_dependency),
@@ -348,23 +418,6 @@ def analyze_farm(
     db.add(assessment)
     db.flush()
 
-    orchestrator = AssessmentOrchestrator()
-    orchestrator.run_satellite_assessment(
-        db=db,
-        application=application,
-        assessment=assessment,
-    )
-    orchestrator.run_debt_assessment(
-        db=db,
-        application=application,
-        assessment=assessment,
-    )
-    orchestrator.run_social_assessment(
-        db=db,
-        application=application,
-        assessment=assessment,
-    )
-
     emit_audit_event(
         db=db,
         event="application_created",
@@ -379,6 +432,7 @@ def analyze_farm(
         },
     )
     db.commit()
+    background_tasks.add_task(_run_assessments_in_background, application.application_id)
     log_event(
         event="analysis_queued",
         application_id=str(application.application_id),

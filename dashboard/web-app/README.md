@@ -8,6 +8,9 @@ This is the Sprint 6 scaffold for `dashboard/web-app` using Next.js (App Router)
 
 ## Run
 ```powershell
+# first time setup:
+Copy-Item .env.example .env
+
 npm run dev
 ```
 

@@ -11,8 +11,57 @@ type NewApplicationPageProps = {
   }>;
 };
 
+type ParsedFormError = {
+  code: string;
+  message: string;
+  correlationId: string | null;
+  details: Array<{ field: string; message: string }>;
+  raw?: string;
+};
+
+function parseSubmissionError(rawError: string | undefined): ParsedFormError | null {
+  if (!rawError) return null;
+  const output: ParsedFormError = {
+    code: "REQUEST_FAILED",
+    message: rawError,
+    correlationId: null,
+    details: [],
+    raw: rawError,
+  };
+
+  if (!rawError.startsWith("HTTP ")) {
+    return output;
+  }
+
+  const jsonStart = rawError.indexOf("{");
+  if (jsonStart === -1) {
+    output.message = rawError;
+    return output;
+  }
+
+  try {
+    const parsed = JSON.parse(rawError.slice(jsonStart));
+    const errorObj = parsed?.error;
+    output.code = errorObj?.code ?? output.code;
+    output.message = errorObj?.message ?? output.message;
+    output.correlationId = errorObj?.correlation_id ?? null;
+    output.details = Array.isArray(errorObj?.details)
+      ? errorObj.details
+          .map((item: { field?: unknown; message?: unknown }) => ({
+            field: String(item?.field ?? "field"),
+            message: String(item?.message ?? "Invalid value"),
+          }))
+          .filter((item: { field: string; message: string }) => item.field && item.message)
+      : [];
+    return output;
+  } catch {
+    return output;
+  }
+}
+
 export default async function NewApplicationPage({ searchParams }: NewApplicationPageProps) {
   const params = await searchParams;
+  const parsedError = parseSubmissionError(params.error);
   const cookieStore = await cookies();
   const actorHeaders = resolveActorHeadersFromCookies(cookieStore);
   const bankerFromCookie = cookieStore.get(AUTH_BANKER_COOKIE)?.value ?? "";
@@ -29,6 +78,13 @@ export default async function NewApplicationPage({ searchParams }: NewApplicatio
     const reference1 = String(formData.get("reference_1") ?? "").trim();
     const reference2 = String(formData.get("reference_2") ?? "").trim();
     const idempotencyKey = `ui-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+    if (Number.isNaN(latitude) || latitude < -90 || latitude > 90) {
+      redirect("/applications/new?error=Latitude%20must%20be%20between%20-90%20and%2090");
+    }
+    if (Number.isNaN(longitude) || longitude < -180 || longitude > 180) {
+      redirect("/applications/new?error=Longitude%20must%20be%20between%20-180%20and%20180");
+    }
 
     const result = await analyzeFarm(
       {
@@ -62,9 +118,24 @@ export default async function NewApplicationPage({ searchParams }: NewApplicatio
           </Link>
         </div>
 
-        {params.error ? (
-          <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200">
-            Failed to submit application: {params.error}
+        {parsedError ? (
+          <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-100">
+            <p className="font-semibold text-rose-200">Failed to submit application</p>
+            <p className="mt-1">
+              {parsedError.code}: {parsedError.message}
+            </p>
+            {parsedError.correlationId ? (
+              <p className="mt-1 text-xs text-rose-200">Correlation ID: {parsedError.correlationId}</p>
+            ) : null}
+            {parsedError.details.length > 0 ? (
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-rose-100">
+                {parsedError.details.map((detail) => (
+                  <li key={`${detail.field}-${detail.message}`}>
+                    <span className="font-semibold">{detail.field}:</span> {detail.message}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
         ) : null}
 
@@ -120,6 +191,8 @@ export default async function NewApplicationPage({ searchParams }: NewApplicatio
               id="latitude"
               name="latitude"
               type="number"
+              min={-90}
+              max={90}
               step="0.000001"
               defaultValue={19.076}
               required
@@ -135,6 +208,8 @@ export default async function NewApplicationPage({ searchParams }: NewApplicatio
               id="longitude"
               name="longitude"
               type="number"
+              min={-180}
+              max={180}
               step="0.000001"
               defaultValue={72.8777}
               required
